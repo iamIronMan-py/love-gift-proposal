@@ -1,0 +1,1164 @@
+:root {
+  --ink: #2b2028;
+  --ink-soft: #6f5c66;
+  --ink-faint: rgba(43, 32, 40, 0.56);
+  --rose: #e89aae;
+  --rose-deep: #c96a86;
+  --gold: #e7c98f;
+  --gold-deep: #b89a5f;
+  --paper: #fffdfb;
+  --serif: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --sans: 'Quicksand', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --track-height: 1000vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: auto;
+  background: #0d1420;
+}
+
+body {
+  margin: 0;
+  background: #0d1420;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-weight: 500;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100%;
+}
+
+::selection {
+  background: rgba(232, 154, 174, 0.35);
+}
+
+/* ------------------------------- experience ------------------------------- */
+
+.exp {
+  position: relative;
+  width: 100%;
+}
+
+.exp__stage {
+  position: fixed;
+  inset: 0;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  isolation: isolate;
+  background: #0d1420;
+}
+
+.exp__track {
+  height: var(--track-height);
+  pointer-events: none;
+}
+
+/* --------------------------------- backdrop -------------------------------- */
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.sky {
+  position: absolute;
+  inset: -2px;
+  opacity: 0;
+  will-change: opacity;
+}
+
+.sky--dawn {
+  opacity: 1;
+  background:
+    radial-gradient(90% 70% at 78% 14%, rgba(255, 246, 218, 0.98) 0%, rgba(255, 226, 187, 0.55) 30%, transparent 64%),
+    radial-gradient(120% 90% at 18% 92%, rgba(214, 202, 244, 0.55) 0%, transparent 62%),
+    linear-gradient(162deg, #fff8f0 0%, #fce9e4 34%, #f4dde9 62%, #e9ddf3 100%);
+}
+
+.sky--flight {
+  background:
+    radial-gradient(70% 50% at 74% 68%, rgba(255, 198, 152, 0.5) 0%, transparent 62%),
+    linear-gradient(180deg, #0a1327 0%, #1a2c52 44%, #5e6a95 74%, #d9a2a0 92%, #ffd9b4 100%);
+}
+
+.sky--garden {
+  background:
+    radial-gradient(80% 60% at 82% 8%, rgba(255, 246, 214, 0.9) 0%, transparent 60%),
+    radial-gradient(70% 50% at 12% 96%, rgba(189, 222, 197, 0.6) 0%, transparent 60%),
+    linear-gradient(162deg, #fbf7ee 0%, #eff5ea 46%, #e2efe3 100%);
+}
+
+.sky--canada {
+  background:
+    radial-gradient(80% 58% at 72% 10%, rgba(255, 252, 242, 0.92) 0%, transparent 60%),
+    radial-gradient(70% 50% at 16% 96%, rgba(198, 220, 236, 0.55) 0%, transparent 62%),
+    linear-gradient(162deg, #f4f8fc 0%, #e8eff7 46%, #dde8f2 100%);
+}
+
+.sky--studio {
+  background:
+    radial-gradient(58% 44% at 50% 44%, rgba(104, 68, 78, 0.72) 0%, rgba(44, 29, 40, 0.5) 42%, transparent 72%),
+    radial-gradient(120% 100% at 50% 118%, rgba(34, 20, 30, 0.9) 0%, transparent 68%),
+    linear-gradient(180deg, #17111b 0%, #0e0b11 58%, #08070b 100%);
+}
+
+.sky--finale {
+  background:
+    radial-gradient(64% 50% at 50% 28%, rgba(255, 240, 202, 0.92) 0%, transparent 64%),
+    radial-gradient(80% 60% at 86% 92%, rgba(247, 205, 216, 0.5) 0%, transparent 62%),
+    linear-gradient(162deg, #fff7ee 0%, #fce8e1 42%, #f1dfe9 76%, #e8e1f2 100%);
+}
+
+.backdrop__aura {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(42% 32% at 50% 42%, rgba(255, 248, 226, 0.34) 0%, transparent 72%);
+  mix-blend-mode: screen;
+  opacity: 0.8;
+}
+
+.backdrop__vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 92% at 50% 44%, transparent 52%, rgba(38, 20, 34, 0.3) 100%);
+  pointer-events: none;
+}
+
+.backdrop__grain {
+  position: absolute;
+  inset: -50%;
+  opacity: 0.05;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+/* ---------------------------------- flight --------------------------------- */
+
+.flight {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0;
+  will-change: opacity, transform;
+}
+
+.flight-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ---------------------------------- objects -------------------------------- */
+
+.objects {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.object {
+  position: absolute;
+  will-change: transform;
+}
+
+.object__inner {
+  width: 100%;
+  transform-origin: 50% 60%;
+  will-change: transform, opacity;
+}
+
+.object svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.object--envelope {
+  right: 4vw;
+  top: 15vh;
+  width: min(40vw, 470px);
+  filter: drop-shadow(0 34px 44px rgba(120, 60, 80, 0.16));
+}
+
+.object--parcel {
+  right: 7vw;
+  top: 19vh;
+  width: min(34vw, 420px);
+  filter: drop-shadow(0 40px 50px rgba(120, 60, 80, 0.2));
+}
+
+.object--garden {
+  left: 53%;
+  bottom: 1vh;
+  width: min(1080px, 106vw);
+  transform: translateX(-50%);
+}
+
+.object--garden .object__inner {
+  filter: drop-shadow(0 38px 48px rgba(80, 110, 84, 0.16));
+}
+
+.object--arrival {
+  right: 5vw;
+  top: 15vh;
+  width: min(36vw, 460px);
+}
+
+.object--box {
+  left: 70%;
+  top: 56%;
+  width: min(500px, 46vw);
+  transform: translate(-50%, -50%);
+  margin-top: 2vh;
+}
+
+/* --------------------------------- arrival --------------------------------- */
+
+.arrival-scene {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1.04;
+  filter: drop-shadow(0 40px 50px rgba(90, 60, 80, 0.18));
+}
+
+.arrival-scene__glow {
+  position: absolute;
+  inset: -14%;
+  background: radial-gradient(50% 46% at 50% 52%, rgba(255, 240, 204, 0.9) 0%, transparent 68%);
+  filter: blur(10px);
+}
+
+.arrival-scene__parcel {
+  position: absolute;
+  left: 10%;
+  top: 6%;
+  width: 80%;
+  z-index: 2;
+}
+
+.delivery-card {
+  position: absolute;
+  left: -12%;
+  bottom: 6%;
+  z-index: 3;
+  width: 66%;
+  padding: 1.15rem 1.3rem;
+  border-radius: 14px;
+  background: linear-gradient(158deg, rgba(255, 253, 250, 0.96), rgba(250, 236, 236, 0.92));
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 20px 40px rgba(110, 60, 80, 0.16);
+  backdrop-filter: blur(8px);
+}
+
+.delivery-card__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  font-size: 0.54rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--rose-deep);
+}
+
+.delivery-card__code {
+  margin-top: 0.9rem;
+  font-family: var(--serif);
+  font-size: clamp(1.1rem, 2.2vw, 1.55rem);
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+
+.delivery-card__line {
+  height: 1px;
+  margin: 0.7rem 0;
+  background: repeating-linear-gradient(90deg, rgba(201, 106, 134, 0.4) 0 6px, transparent 6px 12px);
+}
+
+.delivery-card__note {
+  margin: 0;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: clamp(0.9rem, 1.6vw, 1.1rem);
+  color: var(--ink-soft);
+}
+
+.delivery-stamp {
+  position: absolute;
+  right: -2%;
+  bottom: 10%;
+  z-index: 3;
+  display: grid;
+  place-content: center;
+  width: 27%;
+  aspect-ratio: 1;
+  padding: 0.4rem;
+  border: 1.5px dashed rgba(201, 106, 134, 0.7);
+  border-radius: 50%;
+  background: rgba(255, 251, 246, 0.55);
+  color: var(--rose-deep);
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  line-height: 1.6;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+/* ------------------------------- gift box 3d ------------------------------- */
+
+.box3d {
+  --box: clamp(190px, 24vw, 268px);
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+}
+
+.box3d__halo {
+  position: absolute;
+  inset: -18%;
+  background: radial-gradient(48% 44% at 50% 48%, rgba(255, 230, 186, 0.42) 0%, transparent 70%);
+  filter: blur(6px);
+}
+
+.box3d__scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  perspective: 1500px;
+  perspective-origin: 50% 46%;
+}
+
+.box3d__float {
+  position: relative;
+  width: var(--box);
+  height: var(--box);
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.box3d__glow {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 168%;
+  height: 168%;
+  margin: -84% 0 0 -84%;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 244, 206, 0.98) 0%, rgba(255, 205, 155, 0.5) 34%, rgba(255, 190, 150, 0) 68%);
+  filter: blur(6px);
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.box3d__cube {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.box3d__face {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  backface-visibility: hidden;
+}
+
+.box3d__face--front {
+  transform: translateZ(calc(var(--box) / 2));
+  background:
+    linear-gradient(112deg, rgba(255, 255, 255, 0.6) 0%, transparent 30%),
+    linear-gradient(148deg, #fcebf0 0%, #f6c9d5 52%, #e9a8bc 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5), inset 0 -34px 50px rgba(170, 80, 110, 0.16);
+}
+
+.box3d__face--back {
+  transform: rotateY(180deg) translateZ(calc(var(--box) / 2));
+  background: linear-gradient(150deg, #f7d7e0, #e8a8bb);
+}
+
+.box3d__face--right {
+  transform: rotateY(90deg) translateZ(calc(var(--box) / 2));
+  background: linear-gradient(150deg, #efb6c7 0%, #d98ba2 60%, #c97e97 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.box3d__face--left {
+  transform: rotateY(-90deg) translateZ(calc(var(--box) / 2));
+  background: linear-gradient(150deg, #f4c8d4 0%, #e29cb1 100%);
+}
+
+.box3d__face--bottom {
+  transform: rotateX(-90deg) translateZ(calc(var(--box) / 2));
+  background: linear-gradient(160deg, #c97e97, #a95e78);
+}
+
+.box3d__ribbon {
+  position: absolute;
+  z-index: 2;
+  background: linear-gradient(180deg, #f8e8c3 0%, #e7c98f 46%, #c9a45e 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.32), 0 2px 6px rgba(120, 80, 20, 0.18);
+  backface-visibility: hidden;
+}
+
+.box3d__ribbon--v {
+  left: 50%;
+  top: -1px;
+  width: calc(var(--box) * 0.145);
+  height: calc(var(--box) + 2px);
+  transform: translateX(-50%) translateZ(calc(var(--box) / 2 + 0.5px));
+}
+
+.box3d__ribbon--h {
+  left: -1px;
+  top: 50%;
+  width: calc(var(--box) + 2px);
+  height: calc(var(--box) * 0.145);
+  transform: translateY(-50%) translateZ(calc(var(--box) / 2 + 0.5px));
+}
+
+.box3d__lid-anchor {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform: rotateX(90deg) translateZ(calc(var(--box) / 2));
+}
+
+.box3d__lid {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  border-radius: 14px;
+  background:
+    linear-gradient(122deg, rgba(255, 255, 255, 0.72) 0%, transparent 42%),
+    linear-gradient(150deg, #fdeff3 0%, #f6cdd8 58%, #edb2c4 100%);
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.62), 0 12px 30px rgba(130, 60, 90, 0.28);
+  will-change: transform;
+}
+
+.box3d__lid-ribbon {
+  position: absolute;
+  background: linear-gradient(180deg, #f8e8c3 0%, #e7c98f 48%, #c9a45e 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.34);
+}
+
+.box3d__lid-ribbon--v {
+  left: 50%;
+  top: 0;
+  width: calc(var(--box) * 0.145);
+  height: 100%;
+  transform: translateX(-50%);
+}
+
+.box3d__lid-ribbon--h {
+  left: 0;
+  top: 50%;
+  width: 100%;
+  height: calc(var(--box) * 0.145);
+  transform: translateY(-50%);
+}
+
+.box3d__bow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 52%;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 6px 8px rgba(120, 80, 20, 0.22));
+}
+
+.box3d__contents {
+  position: absolute;
+  left: -20%;
+  top: -46%;
+  width: 140%;
+  height: 140%;
+  opacity: 0;
+  will-change: transform, opacity;
+  filter: drop-shadow(0 18px 26px rgba(120, 50, 80, 0.2));
+}
+
+.box3d__bouquet {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.box3d__shadow {
+  position: absolute;
+  left: 50%;
+  bottom: -22%;
+  width: 86%;
+  height: 30px;
+  margin-left: -43%;
+  border-radius: 50%;
+  background: radial-gradient(50% 50% at 50% 50%, rgba(60, 20, 40, 0.35) 0%, transparent 72%);
+  filter: blur(8px);
+}
+
+/* -------------------------------- typography ------------------------------- */
+
+.copy {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.copy [data-copy] {
+  opacity: 0;
+  will-change: opacity, transform;
+}
+
+.chapter--intro [data-copy] {
+  opacity: 1;
+}
+
+[data-parcel],
+[data-garden],
+[data-arrival],
+[data-box-stage],
+[data-arrival-parcel],
+[data-arrival-card],
+[data-arrival-stamp] {
+  opacity: 0;
+}
+
+[data-garden] .flower,
+[data-garden] .puppy-pop,
+[data-garden] .garden__butterfly,
+[data-garden] .garden__sparkle {
+  opacity: 0;
+}
+
+.chapter {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  padding: clamp(84px, 13vh, 150px) clamp(24px, 6.4vw, 96px) clamp(96px, 15vh, 170px);
+}
+
+.chapter--journey,
+.chapter--unbox {
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: clamp(96px, 15vh, 168px);
+}
+
+.chapter--unbox {
+  justify-content: flex-start;
+}
+
+.chapter--unbox .copy__block {
+  max-width: min(500px, 42vw);
+  margin: 0;
+  text-align: left;
+}
+
+.chapter--unbox .copy__block .lede {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.chapter--finale {
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: clamp(72px, 11vh, 130px);
+}
+
+.copy__block {
+  max-width: min(560px, 46vw);
+}
+
+.copy__block--left {
+  margin-right: auto;
+}
+
+.copy__block--center {
+  max-width: min(780px, 82vw);
+  margin: 0 auto;
+  text-align: center;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin: 0 0 1.15rem;
+  color: var(--rose-deep);
+  font-family: var(--sans);
+  font-size: clamp(0.6rem, 1.1vw, 0.7rem);
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+.eyebrow::before {
+  content: '';
+  width: 28px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, currentColor);
+}
+
+.display {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: clamp(2.5rem, 5.9vw, 5.3rem);
+  font-weight: 500;
+  line-height: 0.97;
+  letter-spacing: -0.022em;
+  color: var(--ink);
+}
+
+.display .line {
+  display: block;
+}
+
+.display em {
+  color: var(--rose-deep);
+  font-style: italic;
+  font-weight: 500;
+}
+
+.lede {
+  max-width: 46ch;
+  margin: 1.4rem 0 0;
+  color: var(--ink-soft);
+  font-size: clamp(0.94rem, 1.45vw, 1.08rem);
+  font-weight: 500;
+  line-height: 1.8;
+}
+
+.copy__block--center .lede {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.signature {
+  margin: 1.6rem 0 0;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: clamp(1.1rem, 2vw, 1.5rem);
+  color: var(--rose-deep);
+}
+
+.chapter--journey .display,
+.chapter--unbox .display {
+  color: #fff8f2;
+  text-shadow: 0 2px 40px rgba(10, 12, 26, 0.35);
+}
+
+.chapter--journey .display em,
+.chapter--unbox .display em {
+  color: #f3d3a0;
+}
+
+.chapter--journey .lede,
+.chapter--unbox .lede {
+  color: rgba(255, 248, 242, 0.76);
+}
+
+.chapter--journey .eyebrow,
+.chapter--unbox .eyebrow {
+  color: #f0d2a0;
+}
+
+/* --------------------------------- details --------------------------------- */
+
+.shipping {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1.9rem;
+}
+
+.shipping__item {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 92px;
+  padding: 0.72rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.42);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 24px rgba(120, 70, 90, 0.06);
+}
+
+.shipping__label {
+  color: var(--ink-faint);
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.shipping__value {
+  font-family: var(--serif);
+  font-size: 1.12rem;
+  color: var(--ink);
+}
+
+.scroll-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-top: 2.5rem;
+  color: var(--ink-faint);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+}
+
+.scroll-hint__line {
+  display: block;
+  width: 52px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--rose-deep), transparent);
+}
+
+/* ----------------------------------- HUD ----------------------------------- */
+
+.hud {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(18px, 3vw, 40px) clamp(20px, 4vw, 54px);
+  color: var(--ink);
+  pointer-events: none;
+  font-family: var(--sans);
+}
+
+.hud__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+}
+
+.hud__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.hud__mark {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.75;
+  box-shadow: 0 0 0 4px rgba(232, 154, 174, 0.18);
+}
+
+.hud__chapter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  opacity: 0.72;
+}
+
+.hud__chapter-line {
+  width: 26px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.4;
+}
+
+.hud__bottom {
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 3vw, 30px);
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.hud__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  opacity: 0.72;
+}
+
+.hud__meta svg {
+  width: 12px;
+  height: 12px;
+}
+
+.hud__progress {
+  position: relative;
+  flex: 1;
+  height: 1px;
+  overflow: hidden;
+  background: currentColor;
+  opacity: 0.22;
+}
+
+.hud__progress-fill {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, var(--gold) 0%, var(--rose) 100%);
+  transform: scaleX(0);
+  transform-origin: left center;
+  opacity: 1;
+}
+
+.hud__flight {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: clamp(78px, 12vh, 128px);
+  width: min(400px, 72vw);
+  margin: 0 auto;
+  padding: 1rem 1.15rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 16px;
+  background: rgba(12, 18, 34, 0.34);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 16px 40px rgba(6, 10, 22, 0.28);
+  color: #fff8f2;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.hud__flight-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.hud__flight-route {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.26em;
+  opacity: 0.72;
+}
+
+.hud__flight-distance {
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  letter-spacing: 0.02em;
+}
+
+.hud__flight-status {
+  margin-top: 0.55rem;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #f2d7a6;
+}
+
+.hud__flight-bar {
+  position: relative;
+  height: 2px;
+  margin-top: 0.85rem;
+  overflow: hidden;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.hud__flight-bar span {
+  position: absolute;
+  inset: 0;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #f3d7a2, #e89aae);
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+/* ---------------------------------- petals --------------------------------- */
+
+.petals {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  will-change: opacity;
+}
+
+.petals span {
+  position: absolute;
+  top: -6vh;
+  border-radius: 58% 42% 52% 48%;
+  opacity: 0.85;
+  will-change: transform;
+}
+
+/* -------------------------------- responsive -------------------------------- */
+
+@media (max-width: 1100px) {
+  .copy__block {
+    max-width: min(520px, 52vw);
+  }
+
+  .object--envelope {
+    width: min(44vw, 420px);
+  }
+
+  .object--parcel {
+    width: min(38vw, 380px);
+  }
+
+  .object--arrival {
+    width: min(40vw, 420px);
+  }
+}
+
+@media (max-width: 860px) {
+  :root {
+    --track-height: 900vh;
+  }
+
+  .chapter {
+    padding: 14vh 7vw 20vh;
+    align-items: flex-start;
+  }
+
+  .chapter--journey,
+  .chapter--unbox,
+  .chapter--finale {
+    justify-content: center;
+    padding-top: 15vh;
+    text-align: center;
+  }
+
+  .chapter--unbox .copy__block {
+    max-width: 100%;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .chapter--unbox .copy__block .lede {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .copy__block,
+  .copy__block--left,
+  .copy__block--center {
+    max-width: 100%;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .eyebrow {
+    justify-content: center;
+  }
+
+  .lede {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .object--envelope {
+    right: -8vw;
+    top: auto;
+    bottom: 2vh;
+    width: 74vw;
+    opacity: 0.9;
+  }
+
+  .object--parcel {
+    right: -6vw;
+    top: auto;
+    bottom: 4vh;
+    width: 66vw;
+  }
+
+  .object--garden {
+    bottom: -1vh;
+    width: 168vw;
+  }
+
+  .object--arrival {
+    right: -6vw;
+    top: auto;
+    bottom: 2vh;
+    width: 70vw;
+  }
+
+  .object--box {
+    left: 50%;
+    top: 64%;
+    width: min(470px, 78vw);
+  }
+
+  .chapter--finale {
+    padding-top: 11vh;
+  }
+
+  .box3d {
+    --box: clamp(170px, 40vw, 230px);
+  }
+
+  .hud__chapter {
+    display: none;
+  }
+
+  .hud__bottom {
+    font-size: 0.5rem;
+  }
+
+  .hud__meta svg {
+    width: 10px;
+    height: 10px;
+  }
+
+  .hud__flight {
+    bottom: 13vh;
+  }
+}
+
+@media (max-width: 560px) {
+  .display {
+    font-size: clamp(2.15rem, 9.6vw, 3rem);
+  }
+
+  .chapter {
+    padding: 13vh 6vw 22vh;
+  }
+
+  .chapter--journey,
+  .chapter--unbox,
+  .chapter--finale {
+    padding-top: 13vh;
+  }
+
+  .lede {
+    font-size: 0.9rem;
+    line-height: 1.72;
+  }
+
+  .shipping {
+    justify-content: center;
+    gap: 0.45rem;
+  }
+
+  .shipping__item {
+    min-width: 78px;
+    padding: 0.6rem 0.75rem;
+  }
+
+  .object--envelope {
+    width: 88vw;
+    right: -16vw;
+    bottom: -1vh;
+  }
+
+  .object--parcel {
+    width: 80vw;
+    right: -12vw;
+    bottom: 1vh;
+  }
+
+  .object--garden {
+    width: 210vw;
+    bottom: -1vh;
+  }
+
+  .object--arrival {
+    width: 84vw;
+    right: -12vw;
+    bottom: 0;
+  }
+
+  .object--box {
+    left: 50%;
+    top: 66%;
+    width: 84vw;
+  }
+
+  .box3d {
+    --box: clamp(150px, 44vw, 195px);
+  }
+
+  .delivery-card {
+    left: -6%;
+    width: 72%;
+    padding: 0.8rem 0.9rem;
+  }
+
+  .delivery-stamp {
+    width: 30%;
+    font-size: 0.44rem;
+  }
+
+  .hud {
+    padding: 14px 16px;
+  }
+
+  .hud__top {
+    font-size: 0.52rem;
+    letter-spacing: 0.18em;
+  }
+
+  .hud__brand {
+    gap: 0.45rem;
+  }
+
+  .hud__bottom .hud__meta:last-child {
+    display: none;
+  }
+
+  .hud__flight {
+    width: 82vw;
+    padding: 0.8rem 0.9rem;
+  }
+
+  .scroll-hint {
+    margin-top: 1.8rem;
+  }
+}
+
+@media (max-height: 640px) and (min-width: 861px) {
+  .chapter {
+    padding-top: 72px;
+    padding-bottom: 84px;
+  }
+
+  .display {
+    font-size: clamp(2.2rem, 5vw, 3.6rem);
+  }
+
+  .lede {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop__grain {
+    opacity: 0.04;
+  }
+}
