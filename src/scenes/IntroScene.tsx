@@ -133,7 +133,7 @@ export function IntroScene({ onNext }: { onNext: () => void }) {
             <p className="route-tag">
               <span>Dubai</span>
               <span className="route-tag__line" />
-              <span>Canada</span>
+              <span>Paris</span>
             </p>
           </div>
         </div>

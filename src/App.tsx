@@ -90,7 +90,7 @@ export default function App() {
             </span>
             <span>Something special</span>
             <span className="brand__sep">·</span>
-            <span>DXB → YYZ</span>
+            <span>DXB → CDG</span>
           </header>
 
           <ProgressRail current={current} />

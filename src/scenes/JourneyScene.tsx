@@ -43,8 +43,8 @@ export function JourneyScene({ onNext }: { onNext: () => void }) {
               : t < 0.72
                 ? 'Cruising over the Atlantic'
                 : t < 0.94
-                  ? 'Descending into Canada'
-                  : 'Welcome to Canada';
+                  ? 'Descending into Paris'
+                  : 'Welcome to Paris';
       }
       if (pctRef.current) {
         pctRef.current.textContent = `${Math.round(flight.t * 100)}%`;
@@ -180,14 +180,14 @@ export function JourneyScene({ onNext }: { onNext: () => void }) {
             </span>
             <span className="journey__meta-item" data-anim>
               <PinIcon />
-              Canada
+              Paris
             </span>
           </div>
 
           {arrived && (
             <div className="journey__cta" ref={ctaRef} style={{ opacity: 0 }}>
               <button className="btn" type="button" onClick={onNext}>
-                Continue to Canada
+                Continue to Paris
                 <ArrowRight className="btn__arrow" />
               </button>
             </div>

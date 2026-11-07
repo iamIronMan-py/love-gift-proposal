@@ -140,10 +140,10 @@ export function ArrivalScene({ onNext }: { onNext: () => void }) {
       <div className="scene__inner arrival__grid">
         <div className="arrival__copy">
           <p className="eyebrow" data-anim>
-            Chapter four · Arrived in Canada
+            Chapter four · Arrived in Paris
           </p>
           <h2 className="display arrival__title" id="arrival-title" data-anim>
-            Touchdown, Canada. <em>Your gift is here.</em>
+            Touchdown, Paris. <em>Your gift is here.</em>
           </h2>
           <p className="lede" data-anim>
             A soft little landing, a parcel on the doorstep, and a tag that says it all:
@@ -183,7 +183,7 @@ export function ArrivalScene({ onNext }: { onNext: () => void }) {
               <span>Express</span>
               <span>Handle with love</span>
             </div>
-            <div className="delivery-card__code">DXB → YYZ</div>
+            <div className="delivery-card__code">DXB → CDG</div>
             <div className="delivery-card__line" />
             <p className="delivery-card__note">For you, with all my love.</p>
           </div>
@@ -193,7 +193,7 @@ export function ArrivalScene({ onNext }: { onNext: () => void }) {
             <br />
             with love
             <br />
-            Canada
+            Paris
           </div>
 
           {LEAVES.map((leaf, i) => (

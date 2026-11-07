@@ -128,7 +128,7 @@ export function ConfirmScene({ onNext }: { onNext: () => void }) {
             </div>
             <div className="shipping__item">
               <span className="shipping__label">To</span>
-              <span className="shipping__value">Canada</span>
+              <span className="shipping__value">Paris</span>
             </div>
             <div className="shipping__item">
               <span className="shipping__label">With</span>

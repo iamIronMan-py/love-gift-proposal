@@ -1,6 +1,7 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
 import { FlightCanvas, type FlightHandle } from './FlightCanvas';
 import { GiftBox3D } from './GiftBox3D';
 import { Envelope } from '../components/illustrations/Envelope';
@@ -8,16 +9,27 @@ import { GiftParcel } from '../components/illustrations/GiftParcel';
 import { Garden } from '../components/illustrations/Garden';
 import { PinIcon, PlaneIcon } from '../components/Icons';
 import { GIFT } from '../config';
+import { storyAudio } from './audio';
 import './experience.css';
 
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
+
+const GATE_LABELS = [
+  'Open the letter',
+  'Seal the parcel',
+  'Board the flight',
+  'Meet your little friend',
+  'Open the door',
+  'Open the gift',
+  'Celebrate',
+];
 
 const CHAPTERS = [
   { at: 0, name: 'Something special' },
   { at: 11, name: 'Wrapped in Dubai' },
   { at: 25, name: 'The journey' },
   { at: 57, name: 'A garden in bloom' },
-  { at: 69, name: 'Arrived in Canada' },
+  { at: 69, name: 'Arrived in Paris' },
   { at: 81, name: 'The ribbon' },
   { at: 93, name: 'Delivered with love' },
 ];
@@ -41,6 +53,25 @@ export function Experience() {
   const distanceRef = useRef<HTMLSpanElement>(null);
   const statusRef = useRef<HTMLDivElement>(null);
   const flightBarRef = useRef<HTMLSpanElement>(null);
+  const gateLabelRef = useRef<HTMLSpanElement>(null);
+  const gateActionRef = useRef<() => void>(() => {});
+  const celebrationRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<(progress: number) => void>(() => {});
+  const celebrateRef = useRef<() => void>(() => {});
+  const cuddleRef = useRef<() => void>(() => {});
+  const [muted, setMuted] = useState(false);
+
+  const handleGate = () => {
+    storyAudio.unlock();
+    gateActionRef.current();
+  };
+
+  const toggleSound = () => {
+    const next = !muted;
+    setMuted(next);
+    storyAudio.setMuted(next);
+    if (!next) storyAudio.unlock();
+  };
 
   useLayoutEffect(() => {
     if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
@@ -52,6 +83,87 @@ export function Experience() {
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const q = gsap.utils.selector(root);
+    let lastIndex = 0;
+
+    const scrollToProgress = (progress: number) => {
+      const distance = document.documentElement.scrollHeight - window.innerHeight;
+      gsap.to(window, {
+        scrollTo: { y: distance * progress, autoKill: false },
+        duration: reduced ? 0.01 : 1.7,
+        ease: 'power2.inOut',
+        overwrite: true,
+      });
+    };
+    scrollRef.current = scrollToProgress;
+
+    const addTemporaryClass = (name: string, duration: number) => {
+      root.classList.remove(name);
+      void root.offsetWidth;
+      root.classList.add(name);
+      window.setTimeout(() => root.classList.remove(name), duration);
+    };
+    cuddleRef.current = () => addTemporaryClass('is-cuddling', 2400);
+
+    const spawnCelebration = () => {
+      const layer = celebrationRef.current;
+      if (!layer) return;
+      layer.replaceChildren();
+      const colors = ['#f6b8c8', '#e7c98f', '#cbb8f2', '#a8d6b4', '#f7d6a2', '#ffffff'];
+      const count = reduced ? 12 : 46;
+      for (let i = 0; i < count; i += 1) {
+        const piece = document.createElement('span');
+        const size = 6 + Math.random() * 9;
+        piece.className = 'confetti';
+        piece.style.left = `${Math.random() * 100}%`;
+        piece.style.width = `${size}px`;
+        piece.style.height = `${size * (0.45 + Math.random() * 0.7)}px`;
+        piece.style.background = colors[i % colors.length];
+        piece.style.animationDelay = `${Math.random() * 0.6}s`;
+        piece.style.animationDuration = `${2.2 + Math.random() * 1.8}s`;
+        piece.style.setProperty('--drift', `${(Math.random() - 0.5) * 220}px`);
+        piece.style.setProperty('--spin', `${Math.random() * 720 - 360}deg`);
+        layer.appendChild(piece);
+      }
+      window.setTimeout(() => layer.replaceChildren(), 5200);
+    };
+    celebrateRef.current = spawnCelebration;
+
+    const gateActions: Array<() => void> = [
+      () => {
+        storyAudio.play('pop');
+        scrollToProgress(0.155);
+      },
+      () => {
+        storyAudio.play('whoosh');
+        scrollToProgress(0.265);
+      },
+      () => {
+        storyAudio.unlock();
+        storyAudio.play('takeoff');
+        addTemporaryClass('is-taking-off', 2100);
+        scrollToProgress(0.575);
+      },
+      () => {
+        storyAudio.play('bark');
+        addTemporaryClass('is-cuddling', 2400);
+        scrollToProgress(0.695);
+      },
+      () => {
+        storyAudio.play('landing');
+        scrollToProgress(0.81);
+      },
+      () => {
+        storyAudio.play('open');
+        spawnCelebration();
+        scrollToProgress(0.935);
+      },
+      () => {
+        storyAudio.play('bark');
+        storyAudio.play('celebrate');
+        addTemporaryClass('is-cuddling', 2400);
+        spawnCelebration();
+      },
+    ];
 
     const updateChapter = (progress: number) => {
       const time = progress * 100;
@@ -59,8 +171,16 @@ export function Experience() {
       CHAPTERS.forEach((chapter, i) => {
         if (time >= chapter.at) index = i;
       });
+      root.dataset.chapter = String(index);
       if (chapterNumRef.current) chapterNumRef.current.textContent = String(index + 1).padStart(2, '0');
       if (chapterNameRef.current) chapterNameRef.current.textContent = CHAPTERS[index].name;
+      if (gateLabelRef.current) gateLabelRef.current.textContent = GATE_LABELS[index];
+      gateActionRef.current = gateActions[index];
+      if (index !== lastIndex) {
+        const cues = ['pop', 'whoosh', 'chime', 'landing', 'bark', 'open', 'celebrate'] as const;
+        if (index > lastIndex) storyAudio.play(cues[index]);
+        lastIndex = index;
+      }
     };
 
     const ctx = gsap.context(() => {
@@ -70,7 +190,8 @@ export function Experience() {
           trigger: track,
           start: 'top top',
           end: 'bottom bottom',
-          scrub: reduced ? true : 0.55,
+          scrub: reduced ? true : 0.32,
+          fastScrollEnd: true,
           invalidateOnRefresh: true,
           onUpdate: (self) => updateChapter(self.progress),
         },
@@ -137,13 +258,13 @@ export function Experience() {
         if (t < 0.04) return 'Preparing for takeoff';
         if (t < 0.2) return 'Lifting off from Dubai';
         if (t < 0.72) return 'Cruising over the Atlantic';
-        if (t < 0.94) return 'Descending into Canada';
-        return 'Touchdown, Canada';
+        if (t < 0.94) return 'Descending into Paris';
+        return 'Touchdown, Paris';
       };
       const onFlight = () => {
         flightRef.current?.setProgress(flight.t);
         if (distanceRef.current) {
-          distanceRef.current.textContent = `${Math.round(flight.t * 11000).toLocaleString('en-US')} km`;
+          distanceRef.current.textContent = `${Math.round(flight.t * 6700).toLocaleString('en-US')} km`;
         }
         if (statusRef.current) statusRef.current.textContent = flightStatus(flight.t);
         if (flightBarRef.current) flightBarRef.current.style.transform = `scaleX(${flight.t})`;
@@ -205,9 +326,9 @@ export function Experience() {
       );
       timeline.to('[data-garden]', { opacity: 0, y: 48, scale: 1.04, duration: 2.8, ease: 'power2.in' }, 66.4);
 
-      // 04 — Arrived in Canada.
+      // 04 — Arrived in Paris.
       timeline.to('[data-sky="garden"]', { opacity: 0, duration: 3 }, 67.4);
-      timeline.to('[data-sky="canada"]', { opacity: 1, duration: 4 }, 67.7);
+      timeline.to('[data-sky="paris"]', { opacity: 1, duration: 4 }, 67.7);
       copyIn('.chapter--arrival', 68.6);
       copyOut('.chapter--arrival', 78.2);
       timeline.fromTo('[data-arrival]', { opacity: 0 }, { opacity: 1, duration: 1.4 }, 68.1);
@@ -234,7 +355,7 @@ export function Experience() {
 
       // 05 — The ribbon.
       timeline.to('.hud', { color: '#fff8f2', duration: 2 }, 79.4);
-      timeline.to('[data-sky="canada"]', { opacity: 0, duration: 3 }, 79.6);
+      timeline.to('[data-sky="paris"]', { opacity: 0, duration: 3 }, 79.6);
       timeline.to('[data-sky="studio"]', { opacity: 1, duration: 4.5 }, 79.9);
       copyIn('.chapter--unbox', 80.8);
       copyOut('.chapter--unbox', 88.6);
@@ -308,13 +429,13 @@ export function Experience() {
   }, []);
 
   return (
-    <div className="exp" ref={rootRef}>
+    <div className="exp" ref={rootRef} onPointerDown={() => storyAudio.unlock()}>
       <div className="exp__stage">
         <div className="backdrop" aria-hidden="true">
           <div className="sky sky--dawn is-on" data-sky="dawn" />
           <div className="sky sky--flight" data-sky="flight" />
           <div className="sky sky--garden" data-sky="garden" />
-          <div className="sky sky--canada" data-sky="canada" />
+          <div className="sky sky--paris" data-sky="paris" />
           <div className="sky sky--studio" data-sky="studio" />
           <div className="sky sky--finale" data-sky="finale" />
           <div className="backdrop__aura" />
@@ -333,19 +454,40 @@ export function Experience() {
             </div>
           </div>
 
-          <div className="object object--parcel">
+          <div
+            className="object object--parcel"
+            onClick={() => {
+              storyAudio.unlock();
+              storyAudio.play('pop');
+              scrollRef.current(0.265);
+            }}
+          >
             <div className="object__inner" data-parcel>
               <GiftParcel />
             </div>
           </div>
 
-          <div className="object object--garden">
+          <div
+            className="object object--garden"
+            onClick={() => {
+              storyAudio.unlock();
+              storyAudio.play('bark');
+              cuddleRef.current();
+            }}
+          >
             <div className="object__inner" data-garden>
               <Garden puppyParcel />
             </div>
           </div>
 
-          <div className="object object--arrival">
+          <div
+            className="object object--arrival"
+            onClick={() => {
+              storyAudio.unlock();
+              storyAudio.play('pop');
+              scrollRef.current(0.81);
+            }}
+          >
             <div className="object__inner arrival-scene" data-arrival>
               <div className="arrival-scene__glow" />
               <div className="arrival-scene__parcel" data-arrival-parcel>
@@ -356,7 +498,7 @@ export function Experience() {
                   <span>Express</span>
                   <span>Handle with love</span>
                 </div>
-                <div className="delivery-card__code">DXB → YYZ</div>
+                <div className="delivery-card__code">DXB → CDG</div>
                 <div className="delivery-card__line" />
                 <p className="delivery-card__note">For you, with all my love.</p>
               </div>
@@ -365,12 +507,19 @@ export function Experience() {
                 <br />
                 with love
                 <br />
-                Canada
+                Paris
               </div>
             </div>
           </div>
 
-          <div className="object object--box">
+          <div
+            className="object object--box"
+            onClick={() => {
+              storyAudio.unlock();
+              storyAudio.play('open');
+              celebrateRef.current();
+            }}
+          >
             <div className="object__inner" data-box-stage>
               <GiftBox3D />
             </div>
@@ -435,7 +584,7 @@ export function Experience() {
                 </div>
                 <div className="shipping__item">
                   <span className="shipping__label">To</span>
-                  <span className="shipping__value">Canada</span>
+                  <span className="shipping__value">Paris</span>
                 </div>
                 <div className="shipping__item">
                   <span className="shipping__label">With</span>
@@ -451,7 +600,7 @@ export function Experience() {
                 Chapter two · The journey
               </p>
               <h2 className="display" id="journey-title" data-copy>
-                A small parcel. An <em>11,000 km</em> journey.
+                A small parcel. A <em>6,700 km</em> journey.
               </h2>
               <p className="lede" data-copy>
                 Across deserts, seas and skies — following a little golden trail all the way to you.
@@ -477,10 +626,10 @@ export function Experience() {
           <section className="chapter chapter--arrival" aria-labelledby="arrival-title">
             <div className="copy__block copy__block--left">
               <p className="eyebrow" data-copy>
-                Chapter four · Arrived in Canada
+                Chapter four · Arrived in Paris
               </p>
               <h2 className="display" id="arrival-title" data-copy>
-                Touchdown, Canada. <em>Your gift is here.</em>
+                Touchdown, Paris. <em>Your gift is here.</em>
               </h2>
               <p className="lede" data-copy>
                 A soft little landing, a parcel on the doorstep, and a tag that says it all: handle
@@ -540,7 +689,7 @@ export function Experience() {
 
           <div className="hud__flight" data-flight-hud>
             <div className="hud__flight-row">
-              <span className="hud__flight-route">DXB → YYZ</span>
+              <span className="hud__flight-route">DXB → CDG</span>
               <span className="hud__flight-distance" ref={distanceRef}>
                 0 km
               </span>
@@ -563,10 +712,26 @@ export function Experience() {
             </div>
             <span className="hud__meta">
               <PlaneIcon />
-              Canada
+              Paris
             </span>
           </div>
         </div>
+
+        <div className="story-gate">
+          <button className="story-gate__btn" type="button" onClick={handleGate}>
+            <span ref={gateLabelRef}>Open the letter</span>
+            <span className="story-gate__arrow" aria-hidden="true">
+              &rarr;
+            </span>
+          </button>
+        </div>
+
+        <button className="sound-toggle" type="button" onClick={toggleSound} aria-pressed={!muted}>
+          <span className={`sound-toggle__dot${muted ? ' is-off' : ''}`} />
+          {muted ? 'Sound off' : 'Sound on'}
+        </button>
+
+        <div className="celebration" ref={celebrationRef} aria-hidden="true" />
       </div>
 
       <div className="exp__track" ref={trackRef} aria-hidden="true" />

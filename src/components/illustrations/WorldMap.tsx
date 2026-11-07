@@ -49,7 +49,7 @@ export function WorldMap({ planeRef, routeRef }: WorldMapProps) {
       className="map-card__svg"
       viewBox="0 0 900 520"
       role="img"
-      aria-label="A stylised world map showing a plane flying from Dubai to Canada"
+      aria-label="A stylised world map showing a plane flying from Dubai to Paris"
     >
       <defs>
         <linearGradient id={sky} x1="0" y1="0" x2="0.5" y2="1">
@@ -158,7 +158,7 @@ export function WorldMap({ planeRef, routeRef }: WorldMapProps) {
           <g transform="translate(-16 -50)">
             <rect className="map-plate" x="-136" y="0" width="136" height="40" rx="20" />
             <text className="map-label" x="-16" y="17" textAnchor="end" fill="#5f8d71">
-              CANADA
+              PARIS
             </text>
             <text className="map-label map-label--sub" x="-16" y="31" textAnchor="end">
               Your gift is here

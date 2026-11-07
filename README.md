@@ -1,6 +1,6 @@
-# Dubai to Canada Gift
+# Dubai to Paris Gift
 
-A cinematic, interactive gift-surprise journey built with React, TypeScript, Vite, and Anime.js. The story travels from Dubai to Canada through seven illustrated scenes, ending with a puppy, flowers, and a personal note.
+A cinematic, interactive gift-surprise journey built with React, TypeScript, Vite, and Anime.js. The story travels from Dubai to Paris through seven illustrated scenes, ending with a puppy, flowers, and a personal note.
 
 ## The Experience
 
@@ -8,7 +8,7 @@ A cinematic, interactive gift-surprise journey built with React, TypeScript, Vit
 2. The gift is packed and sealed in Dubai.
 3. The parcel crosses the world on an animated flight path.
 4. A garden blooms with flowers and a golden puppy.
-5. The parcel lands in Canada with a delivery card.
+5. The parcel lands in Paris with a delivery card.
 6. The ribbon is untied and the box opens.
 7. The finale reveals the puppy, the garden, and a replayable ending.
 
