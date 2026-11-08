@@ -158,8 +158,8 @@ export class FlightWorld {
 
     this.buildSky();
     this.buildLights();
-    this.cloudNear = this.buildCloudSea(-7.4, 0.9, 3.5, 0.34);
-    this.cloudFar = this.buildCloudSea(-10.6, 0.55, 2.1, 0.22);
+    this.cloudNear = this.buildCloudSea(-7.4, 0.9, 3.5, 0.22);
+    this.cloudFar = this.buildCloudSea(-10.6, 0.55, 2.1, 0.14);
     this.buildSun();
     this.buildParticles();
     this.buildPlane();

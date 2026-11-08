@@ -3,7 +3,7 @@ export const GIFT = {
   signature: 'With all my love',
   origin: 'Dubai',
   destination: 'Paris',
-  destinationCode: 'CDG',
+  destinationCode: 'ORY',
   originCode: 'DXB',
   distance: '6,700 km',
 } as const;

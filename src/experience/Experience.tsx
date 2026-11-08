@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
@@ -7,6 +7,8 @@ import { GiftBox3D } from './GiftBox3D';
 import { Envelope } from '../components/illustrations/Envelope';
 import { GiftParcel } from '../components/illustrations/GiftParcel';
 import { Garden } from '../components/illustrations/Garden';
+import { Airplane } from '../components/illustrations/Airplane';
+import { Puppy } from '../components/illustrations/Puppy';
 import { PinIcon, PlaneIcon } from '../components/Icons';
 import { GIFT } from '../config';
 import { storyAudio } from './audio';
@@ -17,15 +19,15 @@ gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 const GATE_LABELS = [
   'Open the letter',
   'Seal the parcel',
-  'Board the flight',
+  'Load the gift & take off',
   'Meet your little friend',
-  'Open the door',
+  'Meet her at the door',
   'Open the gift',
   'Celebrate',
 ];
 
 const CHAPTERS = [
-  { at: 0, name: 'Something special' },
+  { at: 0, name: 'A little surprise' },
   { at: 11, name: 'Wrapped in Dubai' },
   { at: 25, name: 'The journey' },
   { at: 57, name: 'A garden in bloom' },
@@ -56,22 +58,38 @@ export function Experience() {
   const gateLabelRef = useRef<HTMLSpanElement>(null);
   const gateActionRef = useRef<() => void>(() => {});
   const celebrationRef = useRef<HTMLDivElement>(null);
+  const cutsceneRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<(progress: number) => void>(() => {});
   const celebrateRef = useRef<() => void>(() => {});
   const cuddleRef = useRef<() => void>(() => {});
-  const [muted, setMuted] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const handleGate = () => {
     storyAudio.unlock();
+    if (!document.fullscreenElement && window.innerWidth > 700) toggleFullscreen();
     gateActionRef.current();
   };
 
-  const toggleSound = () => {
-    const next = !muted;
-    setMuted(next);
-    storyAudio.setMuted(next);
-    if (!next) storyAudio.unlock();
+  const toggleFullscreen = () => {
+    const doc = document as Document & { webkitFullscreenElement?: Element };
+    if (document.fullscreenElement || doc.webkitFullscreenElement) {
+      if (document.exitFullscreen) void document.exitFullscreen();
+      return;
+    }
+    const root = document.documentElement as HTMLElement & {
+      webkitRequestFullscreen?: () => Promise<void>;
+    };
+    const request = root.requestFullscreen?.bind(root) ?? root.webkitRequestFullscreen?.bind(root);
+    if (request) {
+      Promise.resolve(request()).catch(() => undefined);
+    }
   };
+
+  useEffect(() => {
+    const sync = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener('fullscreenchange', sync);
+    return () => document.removeEventListener('fullscreenchange', sync);
+  }, []);
 
   useLayoutEffect(() => {
     if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
@@ -103,6 +121,27 @@ export function Experience() {
       window.setTimeout(() => root.classList.remove(name), duration);
     };
     cuddleRef.current = () => addTemporaryClass('is-cuddling', 2400);
+
+    const cutsceneTimers: number[] = [];
+    const playCutscene = (
+      scene: 'runway' | 'door',
+      duration: number,
+      done: () => void,
+    ) => {
+      const node = cutsceneRef.current;
+      if (!node || node.dataset.active === 'true') return;
+      node.dataset.scene = scene;
+      node.dataset.active = 'true';
+      root.classList.add('is-cinema');
+      document.documentElement.classList.add('is-cinema');
+      const finish = () => {
+        node.dataset.active = 'false';
+        root.classList.remove('is-cinema');
+        document.documentElement.classList.remove('is-cinema');
+        cutsceneTimers.push(window.setTimeout(done, 380));
+      };
+      cutsceneTimers.push(window.setTimeout(finish, duration));
+    };
 
     const spawnCelebration = () => {
       const layer = celebrationRef.current;
@@ -141,7 +180,12 @@ export function Experience() {
         storyAudio.unlock();
         storyAudio.play('takeoff');
         addTemporaryClass('is-taking-off', 2100);
-        scrollToProgress(0.575);
+        [0, 2200, 4800, 7600].forEach((delay, i) => {
+          cutsceneTimers.push(
+            window.setTimeout(() => storyAudio.setFlight(0.08 + i * 0.17), delay),
+          );
+        });
+        playCutscene('runway', 11800, () => scrollToProgress(0.31));
       },
       () => {
         storyAudio.play('bark');
@@ -150,7 +194,11 @@ export function Experience() {
       },
       () => {
         storyAudio.play('landing');
-        scrollToProgress(0.81);
+        storyAudio.setFlight(null);
+        playCutscene('door', 8200, () => {
+          storyAudio.play('bark');
+          scrollToProgress(0.81);
+        });
       },
       () => {
         storyAudio.play('open');
@@ -172,6 +220,7 @@ export function Experience() {
         if (time >= chapter.at) index = i;
       });
       root.dataset.chapter = String(index);
+      if (time < 21 || time > 56) storyAudio.setFlight(null);
       if (chapterNumRef.current) chapterNumRef.current.textContent = String(index + 1).padStart(2, '0');
       if (chapterNameRef.current) chapterNameRef.current.textContent = CHAPTERS[index].name;
       if (gateLabelRef.current) gateLabelRef.current.textContent = GATE_LABELS[index];
@@ -190,7 +239,7 @@ export function Experience() {
           trigger: track,
           start: 'top top',
           end: 'bottom bottom',
-          scrub: reduced ? true : 0.32,
+          scrub: reduced ? true : 0.55,
           fastScrollEnd: true,
           invalidateOnRefresh: true,
           onUpdate: (self) => updateChapter(self.progress),
@@ -263,6 +312,7 @@ export function Experience() {
       };
       const onFlight = () => {
         flightRef.current?.setProgress(flight.t);
+        storyAudio.setFlight(flight.t);
         if (distanceRef.current) {
           distanceRef.current.textContent = `${Math.round(flight.t * 6700).toLocaleString('en-US')} km`;
         }
@@ -374,7 +424,16 @@ export function Experience() {
       timeline.to(q('[data-box] .box3d__ribbon'), { opacity: 0, y: -14, duration: 2.6, ease: 'power2.in' }, 84.8);
       timeline.to(
         '[data-box-lid]',
-        { z: 135, rotationX: -40, rotationZ: -7, duration: 5.4, ease: 'power3.inOut' },
+        {
+          x: () => (window.innerWidth < 700 ? 54 : 118),
+          y: -46,
+          z: 96,
+          rotationX: -44,
+          rotationZ: 15,
+          opacity: 0,
+          duration: 5.4,
+          ease: 'power3.inOut',
+        },
         85.2,
       );
       timeline.fromTo(
@@ -385,8 +444,8 @@ export function Experience() {
       );
       timeline.fromTo(
         '[data-box-contents]',
-        { opacity: 0, scale: 0.35, y: 70 },
-        { opacity: 1, scale: 1.04, y: -34, duration: 5, ease: 'power3.out' },
+        { opacity: 0, scale: 0.32, y: 92 },
+        { opacity: 1, scale: 0.85, y: -20, duration: 5, ease: 'power3.out' },
         85.6,
       );
       timeline.to('[data-box-stage]', { opacity: 0, y: -60, scale: 1.03, duration: 2.6, ease: 'power2.in' }, 92.2);
@@ -423,6 +482,7 @@ export function Experience() {
 
     return () => {
       window.removeEventListener('load', refresh);
+      cutsceneTimers.forEach((id) => window.clearTimeout(id));
       void fontRefresh;
       ctx.revert();
     };
@@ -498,7 +558,7 @@ export function Experience() {
                   <span>Express</span>
                   <span>Handle with love</span>
                 </div>
-                <div className="delivery-card__code">DXB → CDG</div>
+                <div className="delivery-card__code">DXB → ORY</div>
                 <div className="delivery-card__line" />
                 <p className="delivery-card__note">For you, with all my love.</p>
               </div>
@@ -548,7 +608,7 @@ export function Experience() {
               </p>
               <h1 className="display" id="intro-title">
                 <span className="line" data-copy>
-                  Something <em>special</em>
+                  A little <em>surprise</em>
                 </span>
                 <span className="line" data-copy>
                   is on its way...
@@ -676,20 +736,16 @@ export function Experience() {
 
         <div className="hud" aria-hidden="true">
           <div className="hud__top">
-            <div className="hud__brand">
-              <span className="hud__mark" />
-              Something special
-            </div>
             <div className="hud__chapter">
               <span ref={chapterNumRef}>01</span>
               <span className="hud__chapter-line" />
-              <span ref={chapterNameRef}>Something special</span>
+              <span ref={chapterNameRef}>A little surprise</span>
             </div>
           </div>
 
           <div className="hud__flight" data-flight-hud>
             <div className="hud__flight-row">
-              <span className="hud__flight-route">DXB → CDG</span>
+              <span className="hud__flight-route">DXB → ORY</span>
               <span className="hud__flight-distance" ref={distanceRef}>
                 0 km
               </span>
@@ -726,10 +782,81 @@ export function Experience() {
           </button>
         </div>
 
-        <button className="sound-toggle" type="button" onClick={toggleSound} aria-pressed={!muted}>
-          <span className={`sound-toggle__dot${muted ? ' is-off' : ''}`} />
-          {muted ? 'Sound off' : 'Sound on'}
+        <button
+          className="fullscreen-toggle"
+          type="button"
+          onClick={toggleFullscreen}
+          aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+          aria-pressed={isFullscreen}
+        >
+          {isFullscreen ? (
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M9 4H5a1 1 0 0 0-1 1v4M15 4h4a1 1 0 0 1 1 1v4M9 20H5a1 1 0 0 1-1-1v-4M15 20h4a1 1 0 0 0 1-1v-4" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4" />
+            </svg>
+          )}
         </button>
+
+        <div className="cutscene" ref={cutsceneRef} data-active="false" aria-hidden="true">
+          <div className="cutscene__veil" />
+          <div className="cutscene__scene cutscene__scene--runway">
+            <div className="runway">
+              <div className="runway__sky" />
+              <div className="runway__ground">
+                <span className="runway__line runway__line--1" />
+                <span className="runway__line runway__line--2" />
+                <span className="runway__line runway__line--3" />
+                <span className="runway__line runway__line--4" />
+                <span className="runway__line runway__line--5" />
+              </div>
+              <div className="runway__courier">
+                <span className="runway__courier-head" />
+                <span className="runway__courier-body" />
+                <span className="runway__courier-leg runway__courier-leg--a" />
+                <span className="runway__courier-leg runway__courier-leg--b" />
+              </div>
+              <div className="runway__cart">
+                <div className="runway__parcel">
+                  <GiftParcel />
+                </div>
+              </div>
+              <div className="runway__plane">
+                <svg viewBox="-60 -45 130 100">
+                  <Airplane />
+                </svg>
+              </div>
+              <div className="runway__speed" />
+            </div>
+            <p className="cutscene__caption">The parcel is loaded · Dubai to Paris</p>
+          </div>
+          <div className="cutscene__scene cutscene__scene--door">
+            <div className="doorway">
+              <div className="doorway__wall" />
+              <div className="doorway__frame">
+                <div className="doorway__light" />
+                <div className="doorway__door doorway__door--left">
+                  <span className="doorway__panel" />
+                  <span className="doorway__knob" />
+                </div>
+                <div className="doorway__door doorway__door--right">
+                  <span className="doorway__panel" />
+                </div>
+              </div>
+              <div className="doorway__puppy">
+                <svg viewBox="55 45 210 300">
+                  <Puppy withParcel crown />
+                </svg>
+              </div>
+              <span className="doorway__heart doorway__heart--1" />
+              <span className="doorway__heart doorway__heart--2" />
+              <span className="doorway__heart doorway__heart--3" />
+            </div>
+            <p className="cutscene__caption">A little friend is at your door</p>
+          </div>
+        </div>
 
         <div className="celebration" ref={celebrationRef} aria-hidden="true" />
       </div>
