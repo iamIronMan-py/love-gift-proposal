@@ -6,7 +6,9 @@ type Cue =
   | 'pop'
   | 'bark'
   | 'open'
-  | 'celebrate';
+  | 'celebrate'
+  | 'clunk'
+  | 'loader';
 
 class StoryAudio {
   private ctx: AudioContext | null = null;
@@ -313,6 +315,14 @@ class StoryAudio {
           tone(frequency * 2, i * 0.1 + 0.02, 1.2, 'sine', 0.06);
         });
         noiseBurst(0.2, 1.2, 0.22, 'highpass', 2200, 6000);
+        break;
+      case 'clunk':
+        tone(64, 0, 0.22, 'sine', 0.22, 44);
+        noiseBurst(0, 0.18, 0.28, 'lowpass', 180, 90);
+        break;
+      case 'loader':
+        tone(72, 0, 1.6, 'triangle', 0.08, 96);
+        noiseBurst(0.1, 1.4, 0.08, 'lowpass', 300, 520);
         break;
       default:
         break;

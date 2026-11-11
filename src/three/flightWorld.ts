@@ -3,6 +3,7 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 
 type FlightWorldOptions = {
   mobile?: boolean;
+  reduced?: boolean;
 };
 
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
@@ -114,11 +115,17 @@ export class FlightWorld {
   private readonly pmrem: THREE.PMREMGenerator;
   private readonly environment: THREE.Texture;
   private readonly mobile: boolean;
+  private readonly reduced: boolean;
+  private trail!: THREE.Points<THREE.BufferGeometry, THREE.PointsMaterial>;
+  private trailPositions!: Float32Array;
+  private trailAttribute!: THREE.BufferAttribute;
+  private trailCount = 0;
   private progress = 0;
   private disposed = false;
 
   constructor(canvas: HTMLCanvasElement, options: FlightWorldOptions = {}) {
     this.mobile = Boolean(options.mobile);
+    this.reduced = Boolean(options.reduced);
 
     this.renderer = new THREE.WebGLRenderer({
       canvas,
@@ -162,6 +169,7 @@ export class FlightWorld {
     this.cloudFar = this.buildCloudSea(-10.6, 0.55, 2.1, 0.14);
     this.buildSun();
     this.buildParticles();
+    this.buildTrail();
     this.buildPlane();
 
     this.scene.add(this.plane);
@@ -290,6 +298,61 @@ export class FlightWorld {
     const points = new THREE.Points(geometry, material);
     this.scene.add(points);
     this.disposables.push(geometry, material);
+  }
+
+  private buildTrail() {
+    this.trailCount = this.mobile ? 18 : 40;
+    this.trailPositions = new Float32Array(this.trailCount * 3);
+    const colors = new Float32Array(this.trailCount * 3);
+    const palette = [
+      new THREE.Color('#b3122f'),
+      new THREE.Color('#8b6bd1'),
+      new THREE.Color('#e0405a'),
+      new THREE.Color('#a58ae0'),
+    ];
+    for (let i = 0; i < this.trailCount; i += 1) {
+      const color = palette[i % palette.length];
+      colors[i * 3] = color.r;
+      colors[i * 3 + 1] = color.g;
+      colors[i * 3 + 2] = color.b;
+    }
+    const geometry = new THREE.BufferGeometry();
+    this.trailAttribute = new THREE.BufferAttribute(this.trailPositions, 3);
+    geometry.setAttribute('position', this.trailAttribute);
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    const material = new THREE.PointsMaterial({
+      size: this.mobile ? 0.34 : 0.27,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.9,
+      depthWrite: false,
+      sizeAttenuation: true,
+      blending: THREE.AdditiveBlending,
+      toneMapped: false,
+    });
+    const points = new THREE.Points(geometry, material);
+    points.frustumCulled = false;
+    points.renderOrder = 3;
+    points.visible = !this.reduced;
+    this.scene.add(points);
+    this.disposables.push(geometry, material);
+    this.trail = points;
+  }
+
+  private updateTrail(t: number) {
+    if (!this.trail || this.reduced) return;
+    const count = this.trailCount;
+    for (let i = 0; i < count; i += 1) {
+      const depth = i / Math.max(1, count - 1);
+      const u = clamp01(t - depth * 0.085);
+      const point = this.curve.getPointAt(u);
+      const flutter = Math.sin(t * 28 + i * 0.9) * (0.1 + depth * 0.2);
+      const sway = Math.cos(t * 21 + i * 1.7) * (0.14 + depth * 0.2);
+      this.trailPositions[i * 3] = point.x + flutter;
+      this.trailPositions[i * 3 + 1] = point.y + sway - 0.16 - depth * 0.32;
+      this.trailPositions[i * 3 + 2] = point.z + flutter * 0.6;
+    }
+    this.trailAttribute.needsUpdate = true;
   }
 
   private buildPlane() {
@@ -560,6 +623,8 @@ export class FlightWorld {
     this.camera.position.copy(cameraPosition);
     const look = point.clone().add(tangent.clone().multiplyScalar(3.4)).add(new THREE.Vector3(0, 0.9, 0));
     this.camera.lookAt(look);
+
+    this.updateTrail(t);
 
     const nearMap = (this.cloudNear.material as THREE.MeshBasicMaterial).map;
     const farMap = (this.cloudFar.material as THREE.MeshBasicMaterial).map;

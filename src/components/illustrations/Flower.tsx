@@ -1,4 +1,4 @@
-type FlowerVariant = 'daisy' | 'rose' | 'tulip' | 'poppy';
+type FlowerVariant = 'daisy' | 'rose' | 'tulip' | 'poppy' | 'lavender';
 
 type FlowerProps = {
   x: number;
@@ -8,6 +8,8 @@ type FlowerProps = {
   rotate?: number;
   petal?: string;
   petalLight?: string;
+  petalDeep?: string;
+  petalHighlight?: string;
   center?: string;
   variant?: FlowerVariant;
   leaves?: boolean;
@@ -24,8 +26,10 @@ export function Flower({
   stemHeight = 120,
   headScale = 1,
   rotate = 0,
-  petal = '#f2a9bc',
-  petalLight = '#f9cbd6',
+  petal = '#b3122f',
+  petalLight = '#e0405a',
+  petalDeep = '#7a0b20',
+  petalHighlight = '#ff7a8c',
   center = '#e7c98f',
   variant = 'daisy',
   leaves = true,
@@ -74,11 +78,26 @@ export function Flower({
 
         <g transform={`translate(0 ${-h}) rotate(${rotate}) scale(${headScale})`}>
           <g className="flower__head">
-            <circle r={variant === 'rose' ? 27 : 23} fill={petal} opacity={0.16} />
+            <circle
+              r={variant === 'rose' ? 27 : variant === 'lavender' ? 15 : 23}
+              fill={petal}
+              opacity={variant === 'lavender' ? 0.08 : 0.16}
+            />
             {variant === 'daisy' && <Daisy petal={petal} petalLight={petalLight} center={center} />}
             {variant === 'poppy' && <Poppy petal={petal} petalLight={petalLight} center={center} />}
-            {variant === 'rose' && <Rose petal={petal} petalLight={petalLight} center={center} />}
+            {variant === 'rose' && (
+              <Rose
+                petal={petal}
+                petalLight={petalLight}
+                petalDeep={petalDeep}
+                petalHighlight={petalHighlight}
+                center={center}
+              />
+            )}
             {variant === 'tulip' && <Tulip petal={petal} petalLight={petalLight} center={center} />}
+            {variant === 'lavender' && (
+              <Lavender petal={petal} petalLight={petalLight} petalHighlight={petalHighlight} center={center} />
+            )}
           </g>
         </g>
       </g>
@@ -151,19 +170,24 @@ function Poppy({
 function Rose({
   petal,
   petalLight,
+  petalDeep,
+  petalHighlight,
   center,
 }: {
   petal: string;
   petalLight: string;
+  petalDeep: string;
+  petalHighlight: string;
   center: string;
 }) {
   const layers = [
-    { count: 7, len: 25, width: 12, offset: 0, fill: petal },
-    { count: 6, len: 18, width: 9, offset: 25, fill: petalLight },
-    { count: 5, len: 12, width: 7, offset: 12, fill: petal },
+    { count: 7, len: 26, width: 13, offset: 0, fill: petal, edge: petalDeep, edgeOpacity: 0.45 },
+    { count: 6, len: 19, width: 10, offset: 26, fill: petalLight, edge: petalHighlight, edgeOpacity: 0.5 },
+    { count: 5, len: 13, width: 7, offset: 12, fill: petal, edge: petalHighlight, edgeOpacity: 0.55 },
   ];
   return (
     <g>
+      <circle r={27} fill={petalDeep} opacity={0.34} />
       {layers.map((layer, li) => (
         <g key={li}>
           {Array.from({ length: layer.count }).map((_, i) => (
@@ -175,20 +199,84 @@ function Rose({
               rx={layer.width}
               ry={layer.len}
               fill={layer.fill}
+              stroke={layer.edge}
+              strokeWidth={0.7}
+              strokeOpacity={layer.edgeOpacity}
               transform={`rotate(${layer.offset + (i * 360) / layer.count})`}
             />
           ))}
         </g>
       ))}
-      <circle r={6.5} fill={center} />
+      <circle r={7} fill={petalDeep} />
+      <circle r={3.2} fill={center} opacity={0.92} />
       <path
-        d="M -5 0 C -5 -6 2 -8 5 -3 C 7 1 1 5 -3 3"
+        d="M -5 1 C -7 -5 -1 -9 4 -6 C 9 -3 6 4 0 5"
+        fill="none"
+        stroke={petalHighlight}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        opacity={0.82}
+      />
+      <path
+        d="M -2 3 C -4 0 0 -4 3 -3"
         fill="none"
         stroke={center}
-        strokeWidth={2}
+        strokeWidth={1.2}
         strokeLinecap="round"
-        opacity={0.75}
+        opacity={0.72}
       />
+    </g>
+  );
+}
+
+function Lavender({
+  petal,
+  petalLight,
+  petalHighlight,
+  center,
+}: {
+  petal: string;
+  petalLight: string;
+  petalHighlight: string;
+  center: string;
+}) {
+  const florets = Array.from({ length: 18 }, (_, i) => {
+    const t = i / 17;
+    return {
+      x: Math.sin(t * Math.PI * 2.1) * 7 * (1 - t * 0.3),
+      y: -7 - t * 63,
+      r: 4.6 - t * 1.7,
+      fill: i % 3 === 0 ? petalLight : i % 3 === 1 ? petal : petalHighlight,
+    };
+  });
+  return (
+    <g>
+      <path d="M 0 3 C -3 -18 3 -43 0 -73" stroke="#7fae92" strokeWidth={2.6} fill="none" />
+      {florets.map((floret, i) => (
+        <circle
+          key={i}
+          className="flower__petal"
+          cx={floret.x}
+          cy={floret.y}
+          r={floret.r}
+          fill={floret.fill}
+          opacity={0.96}
+        />
+      ))}
+      {florets
+        .filter((_, i) => i % 2 === 0)
+        .map((floret, i) => (
+          <circle
+            key={`highlight-${i}`}
+            cx={floret.x - 0.9}
+            cy={floret.y - 1}
+            r={floret.r * 0.34}
+            fill="#f3e6ff"
+            opacity={0.72}
+          />
+        ))}
+      <circle cy={-77} r={2.8} fill={petalLight} />
+      <circle cy={-83} r={1.7} fill={center} opacity={0.9} />
     </g>
   );
 }

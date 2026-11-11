@@ -1,6 +1,6 @@
-# Deploy on Render
+# Deploy For You — A Little Surprise on Render
 
-This project is a Vite + React static site. The production files are generated into `dist/`.
+This project is a Vite + React static site. The production files are generated into `dist/`. Use the `/for-you` path when serving through `server.mjs` (Render Web Service); static hosts serve the site from their root or repository subpath.
 
 ## Option A: Render Web Service (uses `npm start`)
 
@@ -28,7 +28,7 @@ npm run build
 npm start
 ```
 
-Open `http://localhost:4173/`.
+Open `http://localhost:4173/for-you`.
 
 ## Option B: Render Static Site (recommended)
 
@@ -47,5 +47,6 @@ No `npm start` command is used for a static site.
 
 - `npm run build` runs `tsc --noEmit` and then `vite build`.
 - `vite.config.ts` uses `base: './'`, so the build works from a subpath.
-- The GitHub Pages workflow builds the same `dist/` output.
+- `server.mjs` serves `index.html` for `/for-you` and redirects `/for-you/` to `/for-you`.
+- The GitHub Pages workflow builds the same `dist/` output. GitHub Pages does not run `server.mjs`, so it serves the experience at the repository path instead of `/for-you`.
 - If the build fails on Render, ensure the Node version is 20.19+ or 22.12+.

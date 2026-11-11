@@ -20,6 +20,7 @@ export const FlightCanvas = forwardRef<FlightHandle, { className?: string }>(fun
     try {
       world = new FlightWorld(canvas, {
         mobile: window.matchMedia('(max-width: 760px)').matches,
+        reduced: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
       });
       worldRef.current = world;
     } catch (error) {

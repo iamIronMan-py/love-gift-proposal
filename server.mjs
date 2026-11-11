@@ -33,7 +33,17 @@ if (!existsSync(root)) {
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
-  const requested = url.pathname === '/' ? '/index.html' : decodeURIComponent(url.pathname);
+
+  if (url.pathname === '/for-you/') {
+    res.writeHead(301, { Location: '/for-you' });
+    res.end();
+    return;
+  }
+
+  const requested =
+    url.pathname === '/' || url.pathname === '/for-you'
+      ? '/index.html'
+      : decodeURIComponent(url.pathname);
   let filePath = path.resolve(root, `.${requested}`);
 
   if (filePath !== root && !filePath.startsWith(`${root}${path.sep}`)) {

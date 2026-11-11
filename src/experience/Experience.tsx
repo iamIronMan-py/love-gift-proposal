@@ -8,6 +8,7 @@ import { Envelope } from '../components/illustrations/Envelope';
 import { GiftParcel } from '../components/illustrations/GiftParcel';
 import { Garden } from '../components/illustrations/Garden';
 import { Airplane } from '../components/illustrations/Airplane';
+import { Bouquet } from '../components/illustrations/Bouquet';
 import { Puppy } from '../components/illustrations/Puppy';
 import { PinIcon, PlaneIcon } from '../components/Icons';
 import { GIFT } from '../config';
@@ -43,8 +44,28 @@ const PETALS = Array.from({ length: 26 }, (_, i) => ({
   rotate: (i * 47) % 360,
   duration: 11 + (i % 6) * 1.2,
   delay: (i % 8) * 0.35,
-  color: ['#f7cdd8', '#d8ccf4', '#fbe8c9', '#c4ddca', '#fbd3c2'][i % 5],
+  color: ['#b3122f', '#8b6bd1', '#e0405a', '#a58ae0', '#c9184a'][i % 5],
 }));
+
+const BLOOM_FLIGHT = [
+  { left: 4, top: 82, size: 'near', rotate: -16, delay: 0 },
+  { left: 20, top: 90, size: 'mid', rotate: 9, delay: 0.1 },
+  { left: 34, top: 58, size: 'mid', rotate: 13, delay: 0.18 },
+  { left: 61, top: 32, size: 'far', rotate: -8, delay: 0.26 },
+  { left: 82, top: 26, size: 'mid', rotate: 16, delay: 0.12 },
+  { left: 12, top: 70, size: 'far', rotate: -5, delay: 0.32 },
+  { left: 28, top: 72, size: 'near', rotate: 7, delay: 0.2 },
+  { left: 68, top: 66, size: 'mid', rotate: -12, delay: 0.28 },
+  { left: 88, top: 74, size: 'near', rotate: 18, delay: 0.36 },
+  { left: 96, top: 50, size: 'far', rotate: -18, delay: 0.22 },
+] as const;
+
+const BURST_BOUQUETS = [
+  { left: 31, top: 50, width: 24, rotate: -24, x: -18, y: 8 },
+  { left: 69, top: 42, width: 22, rotate: 18, x: 20, y: -8 },
+  { left: 54, top: 79, width: 20, rotate: 8, x: -10, y: 18 },
+  { left: 82, top: 75, width: 18, rotate: -12, x: 16, y: 14 },
+] as const;
 
 export function Experience() {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -147,7 +168,7 @@ export function Experience() {
       const layer = celebrationRef.current;
       if (!layer) return;
       layer.replaceChildren();
-      const colors = ['#f6b8c8', '#e7c98f', '#cbb8f2', '#a8d6b4', '#f7d6a2', '#ffffff'];
+      const colors = ['#b3122f', '#8b6bd1', '#e0405a', '#a58ae0', '#c9184a', '#c9b6f2'];
       const count = reduced ? 12 : 46;
       for (let i = 0; i < count; i += 1) {
         const piece = document.createElement('span');
@@ -185,6 +206,8 @@ export function Experience() {
             window.setTimeout(() => storyAudio.setFlight(0.08 + i * 0.17), delay),
           );
         });
+        cutsceneTimers.push(window.setTimeout(() => storyAudio.play('clunk'), 3000));
+        cutsceneTimers.push(window.setTimeout(() => storyAudio.play('loader'), 4200));
         playCutscene('runway', 11800, () => scrollToProgress(0.31));
       },
       () => {
@@ -357,11 +380,37 @@ export function Experience() {
         55.4,
       );
       timeline.fromTo(
-        q('[data-garden] .flower'),
+        q('[data-garden] .garden .flower'),
         { scale: 0.06, opacity: 0, svgOrigin: '0 0' },
         { scale: 1, opacity: 1, duration: 5.6, stagger: 0.3, ease: 'power2.out' },
         56.2,
       );
+      const bloomItems = q('[data-bloom-item]');
+      if (reduced) {
+        timeline.set(bloomItems, { opacity: 1, x: 0, y: 0, scale: 1 }, 55.8);
+      } else {
+        timeline.fromTo(
+          bloomItems,
+          {
+            opacity: 0,
+            x: (index: number) => (index % 2 === 0 ? -window.innerWidth * 0.55 : window.innerWidth * 0.55),
+            y: (index: number) => ((index % 3) - 1) * window.innerHeight * 0.42,
+            scale: 0.52,
+            rotation: (index: number) => BLOOM_FLIGHT[index].rotate - 34,
+          },
+          {
+            opacity: 1,
+            x: 0,
+            y: 0,
+            scale: 1,
+            rotation: (index: number) => BLOOM_FLIGHT[index].rotate,
+            duration: 4.4,
+            stagger: 0.12,
+            ease: 'power3.out',
+          },
+          55.8,
+        );
+      }
       timeline.fromTo(
         '[data-garden] .puppy-pop',
         { opacity: 0, y: 64, scale: 0.92 },
@@ -375,6 +424,7 @@ export function Experience() {
         60,
       );
       timeline.to('[data-garden]', { opacity: 0, y: 48, scale: 1.04, duration: 2.8, ease: 'power2.in' }, 66.4);
+      timeline.to('[data-bloom-flight]', { opacity: 0, duration: 1.8, ease: 'power2.in' }, 66.2);
 
       // 04 — Arrived in Paris.
       timeline.to('[data-sky="garden"]', { opacity: 0, duration: 3 }, 67.4);
@@ -460,6 +510,26 @@ export function Experience() {
         { opacity: 1, y: 0, scale: 1.02, duration: 3.6, ease: 'power2.out' },
         92.9,
       );
+      const burstItems = q('[data-burst-item]');
+      if (reduced) {
+        timeline.set(burstItems, { opacity: 1, x: 0, y: 0, scale: 1 }, 92);
+      } else {
+        timeline.fromTo(
+          burstItems,
+          { opacity: 0, x: 0, y: 0, scale: 0.24, rotation: 0 },
+          {
+            opacity: 1,
+            x: (index: number) => BURST_BOUQUETS[index].x,
+            y: (index: number) => BURST_BOUQUETS[index].y,
+            scale: 1,
+            rotation: (index: number) => BURST_BOUQUETS[index].rotate,
+            duration: 3.4,
+            stagger: 0.12,
+            ease: 'power3.out',
+          },
+          92,
+        );
+      }
       timeline.fromTo('[data-petals]', { opacity: 0 }, { opacity: 1, duration: 2.2 }, 93.2);
       timeline.fromTo(
         '[data-petals] span',
@@ -540,6 +610,22 @@ export function Experience() {
             </div>
           </div>
 
+          <div className="bloom-flight" data-bloom-flight aria-hidden="true">
+            {BLOOM_FLIGHT.map((item, index) => (
+              <div
+                key={index}
+                className={`bloom-flight__item bloom-flight__item--${item.size}`}
+                data-bloom-item
+                style={{
+                  left: `${item.left}%`,
+                  top: `${item.top}%`,
+                }}
+              >
+                <Bouquet compact bare className="bloom-flight__bouquet" />
+              </div>
+            ))}
+          </div>
+
           <div
             className="object object--arrival"
             onClick={() => {
@@ -582,6 +668,22 @@ export function Experience() {
           >
             <div className="object__inner" data-box-stage>
               <GiftBox3D />
+            </div>
+            <div className="bouquet-burst" data-bouquet-burst aria-hidden="true">
+              {BURST_BOUQUETS.map((item, index) => (
+                <div
+                  key={index}
+                  className="bouquet-burst__item"
+                  data-burst-item
+                  style={{
+                    left: `${item.left}%`,
+                    top: `${item.top}%`,
+                    width: `${item.width}%`,
+                  }}
+                >
+                  <Bouquet compact={index > 1} bare className="bouquet-burst__bouquet" />
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -805,29 +907,93 @@ export function Experience() {
           <div className="cutscene__scene cutscene__scene--runway">
             <div className="runway">
               <div className="runway__sky" />
+              <div className="runway__haze" />
               <div className="runway__ground">
-                <span className="runway__line runway__line--1" />
-                <span className="runway__line runway__line--2" />
-                <span className="runway__line runway__line--3" />
-                <span className="runway__line runway__line--4" />
-                <span className="runway__line runway__line--5" />
+                <div className="runway__centreline" aria-hidden="true">
+                  {Array.from({ length: 9 }).map((_, i) => (
+                    <span
+                      key={i}
+                      className="runway__dash"
+                      style={{ bottom: `${4 + i * 4.1}%`, animationDelay: `${i * -0.38}s` }}
+                    />
+                  ))}
+                </div>
+                <div className="runway__edge-lights" aria-hidden="true">
+                  {Array.from({ length: 10 }).map((_, i) => (
+                    <span
+                      key={i}
+                      className="runway__edge-light"
+                      style={{
+                        left: `${23 + i * 5.6}%`,
+                        bottom: `${3 + (i % 2) * 4}%`,
+                        animationDelay: `${i * -0.22}s`,
+                      }}
+                    />
+                  ))}
+                </div>
+                <div className="runway__fog" />
+                <div className="runway__apron" />
               </div>
+
               <div className="runway__courier">
                 <span className="runway__courier-head" />
                 <span className="runway__courier-body" />
+                <span className="runway__courier-arm" />
                 <span className="runway__courier-leg runway__courier-leg--a" />
                 <span className="runway__courier-leg runway__courier-leg--b" />
               </div>
+
               <div className="runway__cart">
+                <span className="runway__cart-bed" />
                 <div className="runway__parcel">
                   <GiftParcel />
                 </div>
+                <div className="runway__bouquet">
+                  <Bouquet compact />
+                </div>
               </div>
-              <div className="runway__plane">
-                <svg viewBox="-60 -45 130 100">
-                  <Airplane />
-                </svg>
+
+              <div className="runway__aircraft">
+                <div className="runway__plane">
+                  <svg viewBox="-60 -45 130 100">
+                    <Airplane />
+                  </svg>
+                </div>
+                <div className="runway__cargo">
+                  <span className="runway__cargo-hold" />
+                  <span className="runway__cargo-ramp" />
+                  <span className="runway__cargo-door" />
+                  <span className="runway__cargo-beacon" />
+                </div>
+                <div className="runway__trail" aria-hidden="true">
+                  {Array.from({ length: 16 }).map((_, i) => (
+                    <span
+                      key={i}
+                      className={`runway__petal runway__petal--${i % 4}`}
+                      style={{
+                        left: `${5 + (i % 5) * 5}%`,
+                        top: `${47 + (i % 4) * 6}%`,
+                        animationDelay: `${(i % 6) * 0.14}s`,
+                      }}
+                    />
+                  ))}
+                </div>
               </div>
+
+              <div className="runway__sparkles" aria-hidden="true">
+                {Array.from({ length: 10 }).map((_, i) => (
+                  <span
+                    key={i}
+                    className="runway__sparkle"
+                    style={{
+                      left: `${26 + ((i * 7) % 40)}%`,
+                      bottom: `${27 + (i % 4) * 5}%`,
+                      animationDelay: `${(i % 5) * 0.12}s`,
+                    }}
+                  />
+                ))}
+              </div>
+
               <div className="runway__speed" />
             </div>
             <p className="cutscene__caption">The parcel is loaded · Dubai to Paris</p>
