@@ -3,6 +3,7 @@ import { FlightWorld } from '../three/flightWorld';
 
 export type FlightHandle = {
   setProgress: (value: number) => void;
+  setTakeoff: (value: number) => void;
 };
 
 export const FlightCanvas = forwardRef<FlightHandle, { className?: string }>(function FlightCanvas(
@@ -42,6 +43,7 @@ export const FlightCanvas = forwardRef<FlightHandle, { className?: string }>(fun
     ref,
     () => ({
       setProgress: (value: number) => worldRef.current?.setProgress(value),
+      setTakeoff: (value: number) => worldRef.current?.setTakeoff(value),
     }),
     [],
   );

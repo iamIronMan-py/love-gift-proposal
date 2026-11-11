@@ -1,12 +1,28 @@
-import { useId } from 'react';
-import { Bouquet } from '../components/illustrations/Bouquet';
+﻿import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 
-export function GiftBox3D() {
-  const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
-  const bow = `bow-${uid}`;
+type Props = {
+  open: number; // 0..1
+  auto?: boolean;
+};
 
+export const GiftBox3D = forwardRef<HTMLDivElement, Props>(function GiftBox3D({ open }, ref) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  useImperativeHandle(ref, () => rootRef.current as HTMLDivElement);
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const t = Math.max(0, Math.min(1, open));
+    const lid = root.querySelector('[data-box-lid]') as HTMLElement | null;
+    const contents = root.querySelector('[data-box-contents]') as HTMLElement | null;
+    const glow = root.querySelector('[data-box-glow]') as HTMLElement | null;
+    const float = root.querySelector('[data-box-float]') as HTMLElement | null;
+    if (lid) lid.style.transform = `translateZ(0px) rotateX(${t * -118}deg) translateY(${-t * 20}px)`;
+    if (contents) { contents.style.opacity = String(t); contents.style.transform = `translateY(${-t * 110}px) scale(${0.8 + t * 0.25})`; }
+    if (glow) glow.style.opacity = String(0.15 + t * 0.85);
+    if (float) float.style.transform = `translateY(${-6 - t * 8}px) rotateX(${-12 - t * 4}deg) rotateY(${18 + t * 10}deg)`;
+  }, [open]);
   return (
-    <div className="box3d" data-box aria-hidden="true">
+    <div className="box3d" data-box aria-hidden="true" ref={rootRef}>
       <div className="box3d__halo" />
       <div className="box3d__scene">
         <div className="box3d__float" data-box-float>
@@ -20,12 +36,17 @@ export function GiftBox3D() {
 
             <div className="box3d__contents" data-box-contents>
               <div className="box3d__spin">
-                <Bouquet className="box3d__bouquet" />
-              </div>
-              <div className="box3d__glitter" aria-hidden="true">
-                {Array.from({ length: 10 }).map((_, i) => (
-                  <span key={i} className={`box3d__spark box3d__spark--${i % 5}`} />
-                ))}
+                <svg viewBox="0 0 320 420" className="box3d__bouquet">
+                  <g transform="translate(160 230)">
+                    <ellipse cx="0" cy="90" rx="60" ry="24" fill="rgba(0,0,0,0.12)" />
+                    <g>
+                      {[-40,-20,0,20,40,-30,-10,10,30].map((x,i)=>(<g key={i} transform={`translate(${x} ${-40 - (i%3)*18}) rotate(${x/3})`}><line x1="0" y1="0" x2="0" y2="120" stroke="#4f7d4a" strokeWidth="4" /><circle cx="0" cy="0" r={18 + (i%3)*4} fill={['#b3122f','#e0405a','#8b6bd1','#c9b6f2','#f2c14e'][i%5]} /><circle cx="-4" cy="-4" r={6} fill="rgba(255,255,255,.5)" /></g>))}
+                    </g>
+                    <path d="M -58 40 L 0 150 L 58 40 Z" fill="#f6dccb" stroke="#e8c0a8" />
+                    <path d="M -50 40 L 0 130 L 50 40" fill="none" stroke="#d9a78d" strokeWidth="3" />
+                    <path d="M -28 46 Q 0 70 28 46" fill="#d4af37" />
+                  </g>
+                </svg>
               </div>
             </div>
 
@@ -37,31 +58,6 @@ export function GiftBox3D() {
                 <div className="box3d__lid-face" />
                 <div className="box3d__lid-ribbon box3d__lid-ribbon--v" />
                 <div className="box3d__lid-ribbon box3d__lid-ribbon--h" />
-                <svg className="box3d__bow" viewBox="0 0 150 100">
-                  <defs>
-                    <linearGradient id={bow} x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stopColor="#f6e3b9" />
-                      <stop offset="48%" stopColor="#e7c98f" />
-                      <stop offset="100%" stopColor="#c9a45e" />
-                    </linearGradient>
-                  </defs>
-                  <path
-                    d="M 75 48 C 34 10 8 34 42 56 C 54 64 66 56 75 48 Z"
-                    fill={`url(#${bow})`}
-                    stroke="#b9955a"
-                    strokeWidth="1.5"
-                  />
-                  <path
-                    d="M 75 48 C 116 10 142 34 108 56 C 96 64 84 56 75 48 Z"
-                    fill={`url(#${bow})`}
-                    stroke="#b9955a"
-                    strokeWidth="1.5"
-                  />
-                  <path d="M 66 54 C 54 76 46 86 34 96" stroke="#dcb878" strokeWidth="9" strokeLinecap="round" fill="none" />
-                  <path d="M 84 54 C 96 76 104 86 116 96" stroke="#dcb878" strokeWidth="9" strokeLinecap="round" fill="none" />
-                  <circle cx="75" cy="48" r="13" fill="#e7c98f" />
-                  <circle cx="71" cy="44" r="4" fill="#fff3d4" opacity="0.9" />
-                </svg>
               </div>
             </div>
           </div>
@@ -70,4 +66,4 @@ export function GiftBox3D() {
       </div>
     </div>
   );
-}
+});

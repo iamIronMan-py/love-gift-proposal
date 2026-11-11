@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --ink: #2b2028;
   --ink-soft: #6f5c66;
   --ink-faint: rgba(43, 32, 40, 0.56);
@@ -1041,34 +1041,6 @@ body {
 
 /* ------------------------------- interactions ------------------------------- */
 
-.object--parcel,
-.object--arrival,
-.object--box,
-.object--garden {
-  pointer-events: none;
-}
-
-.exp[data-chapter='1'] .object--parcel {
-  pointer-events: auto;
-  cursor: pointer;
-}
-
-.exp[data-chapter='4'] .object--arrival {
-  pointer-events: auto;
-  cursor: pointer;
-}
-
-.exp[data-chapter='5'] .object--box {
-  pointer-events: auto;
-  cursor: pointer;
-}
-
-.exp[data-chapter='3'] [data-garden] .puppy-pop,
-.exp[data-chapter='6'] [data-garden] .puppy-pop {
-  pointer-events: painted;
-  cursor: pointer;
-}
-
 .story-gate {
   position: absolute;
   right: clamp(20px, 5vw, 72px);
@@ -1228,6 +1200,63 @@ body {
 html.is-cinema,
 html.is-cinema body {
   overflow: hidden;
+}
+
+.is-cinema .copy,
+.is-cinema .hud,
+.is-cinema .objects,
+.is-cinema .story-gate {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.is-takeoff-active .story-gate,
+.is-takeoff-active .story-gate__btn {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.is-takeoff-scene [data-flight],
+.is-handover [data-flight] {
+  opacity: 1 !important;
+}
+
+.story-gate {
+  transition: opacity 0.35s ease;
+}
+
+.landmarks {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: min(42vh, 360px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.sky--dawn .landmarks {
+  opacity: 0.9;
+  filter: saturate(1.05);
+}
+
+.sky--paris .landmarks,
+.sky--finale .landmarks {
+  opacity: 0.85;
+}
+
+.doorway__puppy {
+  transform-origin: 50% 90%;
+}
+
+.cutscene[data-scene='door'][data-active='true'] .doorway__puppy {
+  animation: puppyArrive 8s cubic-bezier(0.4, 0, 0.3, 1) both, puppyHop 0.5s ease-in-out 0.6s 8;
+}
+
+@keyframes puppyHop {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -18px; }
 }
 
 .celebration {
@@ -1628,57 +1657,6 @@ html.is-cinema body {
     transition-duration: 0.01ms;
   }
 
-  .runway__courier,
-  .runway__cart,
-  .runway__parcel,
-  .runway__bouquet,
-  .runway__aircraft,
-  .runway__cargo-door,
-  .runway__cargo-ramp,
-  .runway__cargo-hold,
-  .runway__cargo-beacon,
-  .runway__speed,
-  .runway__dash,
-  .runway__edge-light,
-  .runway__fog,
-  .runway__petal,
-  .runway__sparkle,
-  .runway__aircraft::after {
-    animation: none;
-  }
-
-  .runway__courier,
-  .runway__cart {
-    opacity: 0;
-  }
-
-  .runway__aircraft {
-    opacity: 1;
-    transform: translate(-6%, 8px) scale(0.92);
-  }
-
-  .runway__parcel,
-  .runway__bouquet,
-  .runway__cargo-ramp,
-  .runway__speed,
-  .runway__petal,
-  .runway__sparkle {
-    opacity: 0;
-  }
-
-  .runway__cargo-hold {
-    opacity: 1;
-  }
-
-  .runway__cargo-door {
-    transform: rotateX(0deg);
-  }
-
-  .runway__dash,
-  .runway__edge-light {
-    opacity: 0.6;
-    transform: none;
-  }
 }
 
 /* -------------------------------- cutscenes ------------------------------- */
@@ -1713,9 +1691,21 @@ html.is-cinema body {
   place-items: center;
 }
 
-.cutscene[data-scene='runway'][data-active='true'] .cutscene__scene--runway,
+.cutscene[data-scene='loading'] .cutscene__veil {
+  display: none;
+}
+
+.cutscene[data-scene='loading'][data-active='true'] .cutscene__scene--loading,
 .cutscene[data-scene='door'][data-active='true'] .cutscene__scene--door {
   display: grid;
+}
+
+.cutscene__scene--loading {
+  pointer-events: none;
+}
+
+.cutscene[data-scene='loading'] .cutscene__caption {
+  bottom: clamp(78px, 12vh, 132px);
 }
 
 .cutscene__caption {
@@ -1749,503 +1739,6 @@ html.is-cinema body {
   10% { opacity: 1; transform: translateY(0); }
   82% { opacity: 1; }
   100% { opacity: 0; transform: translateY(-8px); }
-}
-
-/* runway */
-
-.runway {
-  --runway-cargo-x: 31vw;
-  --runway-cargo-y: -20vh;
-  --runway-bouquet-x: 34vw;
-  --runway-bouquet-y: -19vh;
-  position: relative;
-  width: min(1060px, 100vw);
-  height: min(640px, 100dvh);
-  overflow: hidden;
-}
-
-.runway__sky {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(46% 40% at 72% 26%, rgba(255, 208, 160, 0.65) 0%, transparent 62%),
-    linear-gradient(180deg, #14213d 0%, #2d3a63 42%, #6a5f80 68%, #c78d84 88%, #f3bd93 100%);
-}
-
-.runway__haze {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(62% 42% at 50% 72%, rgba(255, 214, 170, 0.26) 0%, transparent 70%);
-  mix-blend-mode: screen;
-  pointer-events: none;
-}
-
-.runway__ground {
-  position: absolute;
-  left: -8%;
-  right: -8%;
-  bottom: 0;
-  height: 46%;
-  background: linear-gradient(180deg, rgba(30, 33, 42, 0.08) 0%, rgba(28, 30, 38, 0.88) 34%, #1b1d24 100%);
-  clip-path: polygon(20% 0, 80% 0, 100% 100%, 0 100%);
-}
-
-.runway__centreline {
-  position: absolute;
-  inset: 0;
-}
-
-.runway__dash {
-  position: absolute;
-  left: 50%;
-  width: 6px;
-  height: 26px;
-  margin-left: -3px;
-  border-radius: 2px;
-  background: linear-gradient(180deg, rgba(255, 244, 222, 0.9), rgba(255, 214, 170, 0.22));
-  box-shadow: 0 0 12px rgba(255, 214, 170, 0.35);
-  opacity: 0;
-  transform-origin: 50% 100%;
-  animation: runwayDash 11.8s linear both;
-}
-
-@keyframes runwayDash {
-  0%, 62% { opacity: 0; transform: translateY(0) scaleY(0.5); }
-  64% { opacity: 0.55; }
-  76% { opacity: 0.8; }
-  88% { opacity: 0.6; transform: translateY(90px) scaleY(1.4); }
-  100% { opacity: 0; transform: translateY(240px) scaleY(2.2); }
-}
-
-.runway__edge-lights {
-  position: absolute;
-  inset: 0;
-}
-
-.runway__edge-light {
-  position: absolute;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #ffd9a8;
-  box-shadow: 0 0 10px #ffbf80, 0 0 20px rgba(255, 180, 120, 0.6);
-  opacity: 0;
-  animation: runwayEdge 11.8s ease both;
-}
-
-@keyframes runwayEdge {
-  0%, 4% { opacity: 0; }
-  8%, 58% { opacity: 0.62; }
-  64%, 100% { opacity: 0.95; }
-}
-
-.runway__fog {
-  position: absolute;
-  left: -10%;
-  right: -10%;
-  bottom: -8%;
-  height: 24%;
-  background: radial-gradient(60% 100% at 50% 100%, rgba(213, 224, 236, 0.22) 0%, transparent 72%);
-  filter: blur(8px);
-  animation: runwayFog 11.8s ease both;
-}
-
-@keyframes runwayFog {
-  0%, 100% { opacity: 0.38; transform: translateX(0); }
-  62% { opacity: 0.62; transform: translateX(-2%); }
-}
-
-.runway__apron {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 17%;
-  height: 24%;
-  background: linear-gradient(180deg, transparent, rgba(255, 214, 170, 0.07), transparent);
-}
-
-.runway__cart {
-  position: absolute;
-  left: 14%;
-  bottom: 19%;
-  width: clamp(72px, 9vw, 108px);
-  filter: drop-shadow(0 14px 16px rgba(0, 0, 0, 0.4));
-  animation: runwayCart 11.8s cubic-bezier(0.4, 0, 0.4, 1) both;
-}
-
-.runway__cart-bed {
-  position: absolute;
-  left: -8%;
-  right: -8%;
-  bottom: -10%;
-  height: 14%;
-  border-radius: 8px;
-  background: linear-gradient(180deg, #4a3b45, #2a2028);
-  box-shadow: 0 8px 14px rgba(0, 0, 0, 0.35);
-}
-
-.runway__courier {
-  position: absolute;
-  left: 10%;
-  bottom: 17%;
-  width: 46px;
-  height: 132px;
-  transform-origin: bottom center;
-  animation: runwayCourier 11.8s cubic-bezier(0.4, 0, 0.4, 1) both;
-  filter: drop-shadow(0 12px 14px rgba(0, 0, 0, 0.35));
-}
-
-.runway__courier-head {
-  position: absolute;
-  left: 50%;
-  top: 0;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  translate: -50% 0;
-  background: #2d2230;
-  box-shadow: inset 0 -4px 0 rgba(255, 190, 150, 0.28);
-}
-
-.runway__courier-body {
-  position: absolute;
-  left: 50%;
-  top: 22px;
-  width: 34px;
-  height: 66px;
-  border-radius: 16px 16px 10px 10px;
-  translate: -50% 0;
-  background: linear-gradient(160deg, #3b2d3a 0%, #241c27 100%);
-}
-
-.runway__courier-arm {
-  position: absolute;
-  right: 2px;
-  top: 30px;
-  width: 10px;
-  height: 38px;
-  border-radius: 6px;
-  background: linear-gradient(180deg, #3b2d3a, #241c27);
-  transform-origin: top center;
-  animation: runwayWave 11.8s ease both;
-}
-
-.runway__courier-leg {
-  position: absolute;
-  bottom: 0;
-  width: 11px;
-  height: 46px;
-  border-radius: 6px;
-  background: #211923;
-  transform-origin: top center;
-}
-
-.runway__courier-leg--a {
-  left: 11px;
-  animation: courierStep 0.7s ease-in-out 4 alternate;
-}
-
-.runway__courier-leg--b {
-  right: 11px;
-  animation: courierStep 0.7s ease-in-out 4 alternate-reverse;
-}
-
-@keyframes courierStep {
-  from { transform: rotate(8deg); }
-  to { transform: rotate(-8deg); }
-}
-
-@keyframes runwayWave {
-  0%, 54% { transform: rotate(8deg); }
-  57% { transform: rotate(-38deg); }
-  61% { transform: rotate(8deg); }
-  64%, 100% { transform: rotate(8deg); }
-}
-
-@keyframes runwayCourier {
-  0% { opacity: 0; transform: translate(-80px, 16px) scale(0.9); }
-  10% { opacity: 1; }
-  18% { transform: translate(-20px, 4px) scale(0.98); }
-  32%, 54% { opacity: 1; transform: translate(0, 0) scale(1); }
-  60% { opacity: 1; transform: translate(-16px, -2px) scale(1); }
-  68%, 100% { opacity: 0; transform: translate(-46px, -6px) scale(0.94); }
-}
-
-.runway__parcel {
-  position: absolute;
-  left: 8%;
-  top: 8%;
-  width: 76%;
-  z-index: 2;
-  animation: runwayParcel 11.8s cubic-bezier(0.4, 0, 0.2, 1) both;
-}
-
-.runway__parcel svg {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-.runway__bouquet {
-  position: absolute;
-  right: -16%;
-  top: 2%;
-  width: 58%;
-  z-index: 1;
-  filter: drop-shadow(0 10px 14px rgba(90, 10, 30, 0.3));
-  animation: runwayBouquet 11.8s cubic-bezier(0.4, 0, 0.2, 1) both;
-}
-
-.runway__bouquet .bouquet {
-  width: 100%;
-  height: auto;
-}
-
-@keyframes runwayCart {
-  0% { opacity: 0; transform: translate(-90px, 26px) scale(0.8); }
-  10% { opacity: 1; }
-  18% { transform: translate(-22px, 8px) scale(0.88); }
-  32%, 58% { opacity: 1; transform: translate(0, 0) scale(0.94); }
-  66%, 100% { opacity: 0; transform: translate(-30px, 4px) scale(0.9); }
-}
-
-@keyframes runwayParcel {
-  0%, 35.5% { opacity: 1; transform: translate(0, 0) scale(1) rotate(0); }
-  44% { opacity: 1; transform: translate(var(--runway-cargo-x), var(--runway-cargo-y)) scale(0.62) rotate(-6deg); }
-  50%, 100% { opacity: 0; transform: translate(var(--runway-cargo-x), var(--runway-cargo-y)) scale(0.5) rotate(-6deg); }
-}
-
-@keyframes runwayBouquet {
-  0%, 44% { opacity: 1; transform: translate(0, 0) scale(0.9) rotate(0); }
-  54% { opacity: 1; transform: translate(var(--runway-bouquet-x), var(--runway-bouquet-y)) scale(0.54) rotate(8deg); }
-  60%, 100% { opacity: 0; transform: translate(var(--runway-bouquet-x), var(--runway-bouquet-y)) scale(0.44) rotate(8deg); }
-}
-
-.runway__aircraft {
-  position: absolute;
-  left: 50%;
-  bottom: 13%;
-  width: clamp(230px, 34vw, 360px);
-  margin-left: clamp(-115px, -17vw, -180px);
-  transform-origin: 50% 82%;
-  filter: drop-shadow(0 20px 28px rgba(0, 0, 0, 0.35));
-  animation: runwayAircraft 11.8s cubic-bezier(0.42, 0, 0.58, 1) both;
-}
-
-.runway__aircraft::after {
-  content: '';
-  position: absolute;
-  left: 54%;
-  top: 56%;
-  width: 24%;
-  height: 14%;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 196, 138, 0.9) 0%, rgba(255, 150, 90, 0.35) 45%, transparent 70%);
-  opacity: 0;
-  filter: blur(4px);
-  pointer-events: none;
-  animation: runwayEngine 11.8s ease both;
-}
-
-.runway__plane {
-  width: 100%;
-}
-
-.runway__plane svg {
-  display: block;
-  width: 100%;
-  height: auto;
-  overflow: visible;
-  transform: scaleX(-1);
-}
-
-@keyframes runwayAircraft {
-  0% { opacity: 0; transform: translate(-44%, 28px) scale(0.8) rotate(-1deg); }
-  8% { opacity: 1; }
-  30% { transform: translate(-22%, 18px) scale(0.86) rotate(-1deg); }
-  54% { transform: translate(-10%, 8px) scale(0.9) rotate(0deg); }
-  62.7% { transform: translate(-8%, 6px) scale(0.92) rotate(0deg); }
-  81.4% { transform: translate(16%, -6px) scale(0.96) rotate(1deg); }
-  88% { opacity: 1; transform: translate(34%, -70px) scale(1) rotate(4deg); }
-  100% { opacity: 0; transform: translate(82%, -300px) scale(1.08) rotate(7deg); }
-}
-
-@keyframes runwayEngine {
-  0%, 62% { opacity: 0; transform: scale(0.6); }
-  68% { opacity: 0.6; transform: scale(1); }
-  80% { opacity: 0.9; transform: scale(1.25); }
-  100% { opacity: 0; transform: scale(1.5); }
-}
-
-.runway__cargo {
-  position: absolute;
-  left: 54%;
-  top: 45%;
-  width: 19%;
-  height: 13%;
-  perspective: 480px;
-  pointer-events: none;
-}
-
-.runway__cargo-hold {
-  position: absolute;
-  inset: 2px;
-  border-radius: 3px;
-  background: radial-gradient(ellipse at 50% 42%, #ffd79b 0%, #d98a4d 26%, #7a3e25 58%, #2a1711 100%);
-  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.78), inset 0 0 14px rgba(255, 170, 100, 0.28), 0 0 12px rgba(255, 170, 100, 0.24);
-  opacity: 0;
-  animation: runwayHold 11.8s ease both;
-}
-
-@keyframes runwayHold {
-  0%, 25% { opacity: 0; }
-  36%, 54% { opacity: 1; }
-  60%, 100% { opacity: 0; }
-}
-
-.runway__cargo-ramp {
-  position: absolute;
-  left: -240%;
-  bottom: -2%;
-  width: 240%;
-  height: 7px;
-  border-radius: 4px;
-  background: linear-gradient(90deg, rgba(255, 214, 170, 0.15), rgba(255, 214, 170, 0.68));
-  box-shadow: 0 0 12px rgba(255, 200, 140, 0.3);
-  transform-origin: right center;
-  animation: runwayRamp 11.8s ease both;
-}
-
-@keyframes runwayRamp {
-  0%, 25% { opacity: 0; transform: rotate(-10deg) scaleX(0); }
-  30% { opacity: 1; }
-  36%, 54% { opacity: 0.9; transform: rotate(-10deg) scaleX(1); }
-  62%, 100% { opacity: 0; transform: rotate(-10deg) scaleX(0); }
-}
-
-.runway__cargo-door {
-  position: absolute;
-  inset: 0;
-  border-radius: 3px;
-  background: linear-gradient(160deg, #fffaf5 0%, #efe5df 55%, #d3c3c1 100%);
-  border: 1px solid rgba(160, 130, 135, 0.5);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), inset 0 0 6px rgba(150, 120, 120, 0.2);
-  transform-origin: top center;
-  animation: runwayDoor 11.8s cubic-bezier(0.4, 0, 0.2, 1) both;
-}
-
-.runway__cargo-door::before {
-  content: '';
-  position: absolute;
-  inset: 16% 12%;
-  border: 1px solid rgba(150, 120, 125, 0.28);
-  border-radius: 1px;
-}
-
-.runway__cargo-door::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  right: 12%;
-  width: 28%;
-  height: 2px;
-  border-radius: 2px;
-  background: rgba(130, 100, 105, 0.5);
-}
-
-@keyframes runwayDoor {
-  0%, 25% { transform: rotateX(0deg); }
-  36%, 54% { transform: rotateX(-82deg); }
-  62%, 100% { transform: rotateX(0deg); }
-}
-
-.runway__cargo-beacon {
-  position: absolute;
-  right: -6%;
-  top: -30%;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #ff3b3b;
-  box-shadow: 0 0 10px #ff3b3b, 0 0 22px rgba(255, 59, 59, 0.7);
-  opacity: 0;
-  animation: runwayBeacon 11.8s steps(1, end) both;
-}
-
-@keyframes runwayBeacon {
-  0%, 54% { opacity: 0; }
-  56%, 60%, 64%, 68%, 72%, 76%, 80%, 84%, 88%, 92%, 96%, 100% { opacity: 1; }
-  58%, 62%, 66%, 70%, 74%, 78%, 82%, 86%, 90%, 94%, 98% { opacity: 0; }
-}
-
-.runway__trail {
-  position: absolute;
-  inset: -10% 0 0 -18%;
-  pointer-events: none;
-}
-
-.runway__petal {
-  position: absolute;
-  width: 10px;
-  height: 6px;
-  border-radius: 60% 40% 55% 45%;
-  opacity: 0;
-  animation: runwayPetal 11.8s ease both;
-}
-
-.runway__petal--0 { background: #b3122f; }
-.runway__petal--1 { background: #8b6bd1; }
-.runway__petal--2 { background: #e0405a; }
-.runway__petal--3 { background: #c9b6f2; }
-
-@keyframes runwayPetal {
-  0%, 80% { opacity: 0; transform: translate(0, 0) rotate(0) scale(0.6); }
-  84% { opacity: 0.9; }
-  100% { opacity: 0; transform: translate(-42vw, 30vh) rotate(220deg) scale(1); }
-}
-
-.runway__sparkles {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.runway__sparkle {
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  background: radial-gradient(circle, #fff6d8 0%, #f6c96a 55%, transparent 72%);
-  transform: rotate(45deg);
-  opacity: 0;
-  animation: runwaySparkle 11.8s ease both;
-}
-
-@keyframes runwaySparkle {
-  0%, 35% { opacity: 0; transform: scale(0.4) rotate(45deg); }
-  40%, 54% { opacity: 1; }
-  58%, 100% { opacity: 0; transform: scale(0.6) rotate(45deg); }
-}
-
-.runway__speed {
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    96deg,
-    transparent 0 24px,
-    rgba(255, 255, 255, 0.28) 24px 26px,
-    transparent 26px 60px
-  );
-  opacity: 0;
-  -webkit-mask-image: linear-gradient(180deg, transparent 24%, #000 52%, transparent 82%);
-  mask-image: linear-gradient(180deg, transparent 24%, #000 52%, transparent 82%);
-  animation: runwaySpeed 11.8s ease both;
-}
-
-@keyframes runwaySpeed {
-  0%, 62% { opacity: 0; transform: translateX(0); }
-  70% { opacity: 0.35; }
-  84% { opacity: 0.55; transform: translateX(-70px); }
-  100% { opacity: 0; transform: translateX(-180px); }
 }
 
 /* doorway */
@@ -2351,10 +1844,11 @@ html.is-cinema body {
 .doorway__puppy {
   position: absolute;
   left: 50%;
-  bottom: 3%;
-  width: clamp(150px, 22vw, 230px);
-  margin-left: clamp(-75px, -11vw, -115px);
+  bottom: 4%;
+  width: clamp(240px, 34vw, 360px);
+  margin-left: clamp(-120px, -17vw, -180px);
   filter: drop-shadow(0 18px 20px rgba(0, 0, 0, 0.4));
+  z-index: 3;
   animation: puppyArrive 8s cubic-bezier(0.4, 0, 0.3, 1) both;
 }
 
@@ -2366,12 +1860,13 @@ html.is-cinema body {
 }
 
 @keyframes puppyArrive {
-  0% { opacity: 0; transform: translate(-46vw, 18px) scale(0.82); }
-  12% { opacity: 1; }
-  44% { transform: translate(-14vw, 12px) scale(0.9); }
-  62% { transform: translate(0, 0) scale(1); }
-  78% { transform: translate(0, -10px) scale(1.02); }
-  100% { transform: translate(0, -4px) scale(1); opacity: 1; }
+  0% { opacity: 1; transform: translate(0, 8px) scale(0.96); }
+  18% { transform: translate(0, -18px) scale(1.03); }
+  36% { transform: translate(0, 0) scale(1); }
+  54% { transform: translate(0, -14px) scale(1.02); }
+  72% { transform: translate(0, 0) scale(1); }
+  88% { transform: translate(0, -10px) scale(1.02); }
+  100% { transform: translate(0, -2px) scale(1); opacity: 1; }
 }
 
 .doorway__heart {
@@ -2417,34 +1912,6 @@ html.is-cinema body {
     padding: 0 12vw;
   }
 
-  .runway {
-    --runway-cargo-x: 44vw;
-    --runway-cargo-y: -15vh;
-    --runway-bouquet-x: 47vw;
-    --runway-bouquet-y: -14vh;
-    height: 100dvh;
-  }
-
-  .runway__aircraft {
-    width: 74vw;
-    margin-left: -37vw;
-  }
-
-  .runway__cart {
-    left: 10%;
-    bottom: 21%;
-    width: clamp(64px, 18vw, 84px);
-  }
-
-  .runway__courier {
-    left: 5%;
-    bottom: 19%;
-  }
-
-  .runway__ground {
-    height: 42%;
-  }
-
   .doorway {
     width: 96vw;
     height: 78dvh;
@@ -2482,3 +1949,33 @@ html.is-cinema body {
     inset: -10% -6%;
   }
 }
+
+.landmarks { position:absolute; inset:auto 0 0 0; height:min(70vh,640px); pointer-events:none; z-index:1; }
+.sky--dawn .landmarks { opacity:.92; filter:saturate(1.05) contrast(1.02); }
+.sky--paris .landmarks, .sky--finale .landmarks { opacity:.9; }
+.landmarks__img { position:absolute; bottom:0; height:auto; object-fit:contain; filter:drop-shadow(0 10px 30px rgba(0,0,0,.18)); }
+.landmarks--dubai .landmarks__img--burj { left:4%; width:min(34vw,360px); }
+.landmarks--dubai .landmarks__img--arab { right:2%; width:min(46vw,520px); bottom:-2%; }
+.landmarks--paris .landmarks__img--eiffel { left:6%; width:min(28vw,300px); }
+.landmarks--paris .landmarks__img--notre { right:4%; width:min(42vw,480px); bottom:-1%; }
+
+
+.runway-mark { position:absolute; inset:0; pointer-events:none; opacity:0; z-index:2; transition:opacity .2s linear; }
+.runway-mark .landmarks { height:100%; }
+.runway-mark--dubai .landmarks__img--burj { left:2%; bottom:8%; width:min(40vw,440px); }
+.runway-mark--dubai .landmarks__img--arab { right:2%; bottom:6%; width:min(52vw,620px); }
+.runway-mark--paris .landmarks__img--eiffel { left:4%; bottom:8%; width:min(34vw,380px); }
+.runway-mark--paris .landmarks__img--notre { right:4%; bottom:6%; width:min(48vw,560px); }
+.landmarks__img { mix-blend-mode:multiply; filter:saturate(1.1) contrast(1.05) drop-shadow(0 12px 26px rgba(0,0,0,.2)); }
+.landmarks__img--arab, .landmarks__img--eiffel, .landmarks__img--notre { mix-blend-mode:normal; }
+.runway-mark { position:absolute; inset:0; pointer-events:none; opacity:0; z-index:2; transition:opacity .25s linear; }
+.runway-mark .landmarks { height:100%; }
+.runway-mark--dubai .landmarks__img--burj { left:3%; bottom:4%; width:min(38vw,460px); }
+.runway-mark--dubai .landmarks__img--arab { right:3%; bottom:3%; width:min(52vw,640px); }
+.runway-mark--paris .landmarks__img--eiffel { left:4%; bottom:4%; width:min(34vw,420px); }
+.runway-mark--paris .landmarks__img--notre { right:4%; bottom:3%; width:min(46vw,560px); }
+.landmarks__img { filter: drop-shadow(0 14px 28px rgba(0,0,0,.22)); }
+.box3d__lid { transform-origin: 50% 0%; transition: transform .2s linear; }
+.box3d__contents { pointer-events:none; transition: opacity .2s linear, transform .2s linear; }
+.cutscene[data-scene="door"][data-active="true"] .doorway__puppy { animation: puppyArrive 8s cubic-bezier(0.4,0,0.3,1) both, puppyHop .5s ease-in-out .2s 12; }
+@keyframes puppyHop { 0%,100% { transform: translateY(0) scale(1); } 40% { transform: translateY(-28px) scale(1.03); } 60% { transform: translateY(0) scale(1); } }

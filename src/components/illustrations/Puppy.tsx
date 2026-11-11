@@ -3,10 +3,11 @@ import { useId } from 'react';
 type PuppyProps = {
   withParcel?: boolean;
   crown?: boolean;
+  withRose?: boolean;
   className?: string;
 };
 
-export function Puppy({ withParcel = false, crown = false, className = '' }: PuppyProps) {
+export function Puppy({ withParcel = false, crown = false, withRose = false, className = '' }: PuppyProps) {
   const rawId = useId();
   const uid = rawId.replace(/[^a-zA-Z0-9]/g, '');
   const fur = `fur-${uid}`;
@@ -138,6 +139,22 @@ export function Puppy({ withParcel = false, crown = false, className = '' }: Pup
           fill="none"
         />
         <path d="M 152 207 C 152 216 168 216 168 207 Z" fill="#ef8fa0" />
+
+        {withRose && (
+          <g className="puppy__rose" transform="translate(168 194) rotate(24)">
+            <path d="M 0 -2 C 6 10 14 22 20 34" stroke="#6f9b73" strokeWidth="3.4" fill="none" strokeLinecap="round" />
+            <ellipse cx="6" cy="14" rx="5.4" ry="2.8" fill="#8fb996" transform="rotate(-24 6 14)" />
+            <ellipse cx="12" cy="24" rx="4.6" ry="2.4" fill="#9fc7a9" transform="rotate(18 12 24)" />
+            <g transform="translate(20 34)">
+              <circle cx="0" cy="-5.4" r="5.6" fill="#d62839" />
+              <circle cx="5" cy="-1.8" r="5.4" fill="#e0405a" />
+              <circle cx="3.2" cy="4.2" r="5.2" fill="#b3122f" />
+              <circle cx="-3.2" cy="4.2" r="5.2" fill="#c9184a" />
+              <circle cx="-5" cy="-1.8" r="5.4" fill="#e0405a" />
+              <circle cx="0" cy="0.2" r="3.6" fill="#7a0b20" />
+            </g>
+          </g>
+        )}
 
         {crown && <Crown />}
       </g>

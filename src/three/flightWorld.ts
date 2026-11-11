@@ -8,6 +8,11 @@ type FlightWorldOptions = {
 
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
 
+const smoothstep = (edge0: number, edge1: number, value: number) => {
+  const t = clamp01((value - edge0) / (edge1 - edge0));
+  return t * t * (3 - 2 * t);
+};
+
 function makeCloudTexture(size: number): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
   canvas.width = size;
@@ -120,8 +125,29 @@ export class FlightWorld {
   private trailPositions!: Float32Array;
   private trailAttribute!: THREE.BufferAttribute;
   private trailCount = 0;
+  private exhaust!: THREE.Points<THREE.BufferGeometry, THREE.PointsMaterial>;
+  private exhaustPositions!: Float32Array;
+  private exhaustAttribute!: THREE.BufferAttribute;
+  private exhaustCount = 0;
   private progress = 0;
   private disposed = false;
+  private readonly airportGroup = new THREE.Group();
+  private readonly airportMaterials: Array<{ material: THREE.Material; opacity: number }> = [];
+  private readonly loaderMaterials: Array<{ material: THREE.Material; opacity: number }> = [];
+  private readonly takeoffDir = new THREE.Vector3();
+  private readonly takeoffStart = new THREE.Vector3();
+  private readonly groundQuaternion = new THREE.Quaternion();
+  private readonly cruisePlanePosition = new THREE.Vector3();
+  private readonly cruisePlaneQuaternion = new THREE.Quaternion();
+  private readonly cruiseCameraPosition = new THREE.Vector3();
+  private readonly cruiseLookAt = new THREE.Vector3();
+  private readonly groundY = -7.02;
+  private cargoDoorPivot!: THREE.Group;
+  private cargoBox!: THREE.Group;
+  private cargoBoxHome = new THREE.Vector3();
+  private cargoBoxTarget = new THREE.Vector3();
+  private loaderGroup!: THREE.Group;
+  private landingGear!: THREE.Group;
 
   constructor(canvas: HTMLCanvasElement, options: FlightWorldOptions = {}) {
     this.mobile = Boolean(options.mobile);
@@ -163,6 +189,15 @@ export class FlightWorld {
       0.5,
     );
 
+    const start = this.curve.getPointAt(0);
+    this.takeoffDir.copy(this.curve.getTangentAt(0)).setY(0).normalize();
+    this.takeoffStart.copy(start).addScaledVector(this.takeoffDir, -26);
+    this.takeoffStart.y = this.groundY + 0.58;
+    const groundLook = new THREE.Object3D();
+    groundLook.position.copy(this.takeoffStart);
+    groundLook.lookAt(this.takeoffStart.clone().add(this.takeoffDir));
+    this.groundQuaternion.copy(groundLook.quaternion);
+
     this.buildSky();
     this.buildLights();
     this.cloudNear = this.buildCloudSea(-7.4, 0.9, 3.5, 0.22);
@@ -170,11 +205,226 @@ export class FlightWorld {
     this.buildSun();
     this.buildParticles();
     this.buildTrail();
+    this.buildExhaust();
     this.buildPlane();
+    this.buildAirport();
+    this.buildLoader();
 
     this.scene.add(this.plane);
     this.resize();
     this.setProgress(0);
+    this.captureCruisePose();
+  }
+
+  private captureCruisePose() {
+    this.cruisePlanePosition.copy(this.plane.position);
+    this.cruisePlaneQuaternion.copy(this.plane.quaternion);
+    this.cruiseCameraPosition.copy(this.camera.position);
+  }
+
+  private trackAirportMaterial(material: THREE.Material) {
+    material.transparent = true;
+    this.airportMaterials.push({ material, opacity: material.opacity });
+    this.disposables.push(material);
+    return material;
+  }
+
+  private trackLoaderMaterial(material: THREE.Material) {
+    material.transparent = true;
+    this.loaderMaterials.push({ material, opacity: material.opacity });
+    this.disposables.push(material);
+    return material;
+  }
+
+  private setAirportFade(fade: number) {
+    const amount = clamp01(fade);
+    this.airportGroup.visible = amount > 0.008;
+    this.airportMaterials.forEach(({ material, opacity }) => {
+      material.opacity = opacity * amount;
+      material.depthWrite = amount > 0.55;
+    });
+  }
+
+  private setLoaderFade(fade: number) {
+    const amount = clamp01(fade);
+    this.loaderGroup.visible = amount > 0.012;
+    this.loaderMaterials.forEach(({ material, opacity }) => {
+      material.opacity = opacity * amount;
+      material.depthWrite = amount > 0.55;
+    });
+  }
+
+  private buildAirport() {
+    const groundMaterial = this.trackAirportMaterial(
+      new THREE.MeshStandardMaterial({ color: 0x3d2c38, roughness: 0.96, metalness: 0.02 }),
+    );
+    const groundGeometry = new THREE.PlaneGeometry(520, 520);
+    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.set(0, this.groundY - 0.12, -12);
+    ground.receiveShadow = true;
+    this.airportGroup.add(ground);
+    this.disposables.push(groundGeometry);
+
+    const runway = new THREE.Group();
+    const runwayCenter = this.takeoffStart.clone().addScaledVector(this.takeoffDir, 30);
+    runway.position.set(runwayCenter.x, this.groundY, runwayCenter.z);
+    runway.rotation.y = Math.atan2(this.takeoffDir.x, this.takeoffDir.z);
+
+    const stripMaterial = this.trackAirportMaterial(
+      new THREE.MeshStandardMaterial({ color: 0x20242d, roughness: 0.82, metalness: 0.12 }),
+    );
+    const stripGeometry = new THREE.BoxGeometry(20, 0.12, 184);
+    const strip = new THREE.Mesh(stripGeometry, stripMaterial);
+    strip.position.y = 0.04;
+    strip.receiveShadow = true;
+    runway.add(strip);
+    this.disposables.push(stripGeometry);
+
+    const shoulderMaterial = this.trackAirportMaterial(
+      new THREE.MeshStandardMaterial({ color: 0x553f4a, roughness: 0.95 }),
+    );
+    for (const side of [-1, 1]) {
+      const shoulderGeometry = new THREE.BoxGeometry(2.4, 0.08, 184);
+      const shoulder = new THREE.Mesh(shoulderGeometry, shoulderMaterial);
+      shoulder.position.set(side * 11.2, 0.015, 0);
+      runway.add(shoulder);
+      this.disposables.push(shoulderGeometry);
+    }
+
+    const dashMaterial = this.trackAirportMaterial(
+      new THREE.MeshBasicMaterial({ color: 0xe8d8c5 }),
+    );
+    const dashGeometry = new THREE.BoxGeometry(0.32, 0.025, 4.8);
+    const dashCount = 22;
+    const dashes = new THREE.InstancedMesh(dashGeometry, dashMaterial, dashCount);
+    const matrix = new THREE.Matrix4();
+    for (let i = 0; i < dashCount; i += 1) {
+      matrix.makeTranslation(0, 0.13, -84 + i * 8);
+      dashes.setMatrixAt(i, matrix);
+    }
+    dashes.instanceMatrix.needsUpdate = true;
+    runway.add(dashes);
+    this.disposables.push(dashGeometry);
+
+    const lightMaterial = this.trackAirportMaterial(
+      new THREE.MeshBasicMaterial({ color: 0xffd8a1 }),
+    );
+    const lightGeometry = new THREE.SphereGeometry(0.1, 6, 6);
+    const lightRows = 22;
+    const edgeLights = new THREE.InstancedMesh(lightGeometry, lightMaterial, lightRows * 2);
+    let lightIndex = 0;
+    for (const side of [-1, 1]) {
+      for (let i = 0; i < lightRows; i += 1) {
+        matrix.makeTranslation(side * 10.6, 0.2, -84 + i * 8);
+        edgeLights.setMatrixAt(lightIndex, matrix);
+        lightIndex += 1;
+      }
+    }
+    edgeLights.instanceMatrix.needsUpdate = true;
+    runway.add(edgeLights);
+    this.disposables.push(lightGeometry);
+
+    const apronMaterial = this.trackAirportMaterial(
+      new THREE.MeshStandardMaterial({ color: 0x4a3743, roughness: 0.92 }),
+    );
+    const apronGeometry = new THREE.BoxGeometry(58, 0.08, 68);
+    const apron = new THREE.Mesh(apronGeometry, apronMaterial);
+    apron.position.set(31, 0.01, -32);
+    apron.receiveShadow = true;
+    runway.add(apron);
+    this.disposables.push(apronGeometry);
+
+    const terminalMaterial = this.trackAirportMaterial(
+      new THREE.MeshStandardMaterial({ color: 0x6e5360, roughness: 0.7, metalness: 0.15 }),
+    );
+    const terminalGeometry = new THREE.BoxGeometry(18, 8, 54);
+    const terminal = new THREE.Mesh(terminalGeometry, terminalMaterial);
+    terminal.position.set(58, 4, -32);
+    runway.add(terminal);
+    this.disposables.push(terminalGeometry);
+
+    const glowMaterial = this.trackAirportMaterial(
+      new THREE.MeshBasicMaterial({ color: 0xffcf9a }),
+    );
+    const glowGeometry = new THREE.BoxGeometry(0.5, 0.14, 48);
+    const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+    glow.position.set(48.8, 2.4, -32);
+    runway.add(glow);
+    this.disposables.push(glowGeometry);
+
+    this.airportGroup.add(runway);
+    this.scene.add(this.airportGroup);
+    this.setAirportFade(1);
+  }
+
+  private buildLoader() {
+    const group = new THREE.Group();
+    const offset = new THREE.Vector3(1.22, 0, 0.72).applyQuaternion(this.groundQuaternion);
+    group.position.copy(this.takeoffStart).add(offset);
+    group.position.y = this.groundY;
+    group.quaternion.copy(this.groundQuaternion);
+
+    const metal = this.trackLoaderMaterial(
+      new THREE.MeshStandardMaterial({ color: 0xc9b7ad, roughness: 0.5, metalness: 0.55 }),
+    );
+    const darkMetal = this.trackLoaderMaterial(
+      new THREE.MeshStandardMaterial({ color: 0x30282e, roughness: 0.68, metalness: 0.35 }),
+    );
+    const belt = this.trackLoaderMaterial(
+      new THREE.MeshStandardMaterial({ color: 0x5b454f, roughness: 0.9 }),
+    );
+    const beacon = this.trackLoaderMaterial(
+      new THREE.MeshBasicMaterial({ color: 0xffc987 }),
+    );
+
+    const bedGeometry = new THREE.BoxGeometry(1.5, 0.1, 1.05);
+    const bed = new THREE.Mesh(bedGeometry, metal);
+    bed.position.set(0, 0.52, 0);
+    bed.castShadow = true;
+    group.add(bed);
+    this.disposables.push(bedGeometry);
+
+    const beltGeometry = new THREE.BoxGeometry(1.28, 0.035, 0.82);
+    const beltMesh = new THREE.Mesh(beltGeometry, belt);
+    beltMesh.position.set(0, 0.585, 0);
+    group.add(beltMesh);
+    this.disposables.push(beltGeometry);
+
+    for (const x of [-0.58, 0.58]) {
+      for (const z of [-0.36, 0.36]) {
+        const legGeometry = new THREE.BoxGeometry(0.09, 0.46, 0.09);
+        const leg = new THREE.Mesh(legGeometry, darkMetal);
+        leg.position.set(x, 0.27, z);
+        group.add(leg);
+        this.disposables.push(legGeometry);
+      }
+    }
+
+    const axleGeometry = new THREE.BoxGeometry(1.28, 0.06, 0.06);
+    const axle = new THREE.Mesh(axleGeometry, darkMetal);
+    axle.position.set(0, 0.14, -0.34);
+    group.add(axle);
+    this.disposables.push(axleGeometry);
+
+    const wheelGeometry = new THREE.CylinderGeometry(0.12, 0.12, 0.08, 12);
+    wheelGeometry.rotateZ(Math.PI / 2);
+    for (const x of [-0.52, 0.52]) {
+      const wheel = new THREE.Mesh(wheelGeometry, darkMetal);
+      wheel.position.set(x, 0.13, -0.36);
+      group.add(wheel);
+    }
+    this.disposables.push(wheelGeometry);
+
+    const beaconGeometry = new THREE.SphereGeometry(0.055, 8, 8);
+    const beaconMesh = new THREE.Mesh(beaconGeometry, beacon);
+    beaconMesh.position.set(0.52, 0.82, 0.36);
+    group.add(beaconMesh);
+    this.disposables.push(beaconGeometry);
+
+    this.loaderGroup = group;
+    this.scene.add(group);
+    this.setLoaderFade(1);
   }
 
   private buildSky() {
@@ -337,6 +587,75 @@ export class FlightWorld {
     this.scene.add(points);
     this.disposables.push(geometry, material);
     this.trail = points;
+  }
+
+  private buildExhaust() {
+    this.exhaustCount = this.mobile ? 18 : 34;
+    this.exhaustPositions = new Float32Array(this.exhaustCount * 3);
+    const geometry = new THREE.BufferGeometry();
+    this.exhaustAttribute = new THREE.BufferAttribute(this.exhaustPositions, 3);
+    geometry.setAttribute('position', this.exhaustAttribute);
+    const material = new THREE.PointsMaterial({
+      size: this.mobile ? 0.38 : 0.3,
+      color: 0xe8dfd6,
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      sizeAttenuation: true,
+      blending: THREE.NormalBlending,
+      toneMapped: false,
+    });
+    this.exhaust = new THREE.Points(geometry, material);
+    this.exhaust.frustumCulled = false;
+    this.exhaust.renderOrder = 4;
+    this.exhaust.visible = !this.reduced;
+    this.scene.add(this.exhaust);
+    this.disposables.push(geometry, material);
+  }
+
+  private updateExhaust(power: number, backDir: THREE.Vector3, spread = 0.08) {
+    if (!this.exhaust || this.reduced) return;
+    const material = this.exhaust.material;
+    material.opacity = Math.min(0.5, Math.max(0, power * 0.55));
+    this.exhaust.visible = power > 0.01;
+    const count = this.exhaustCount;
+    for (let i = 0; i < count; i += 1) {
+      const depth = 0.25 + (i / Math.max(1, count - 1)) * (1.1 + power * 1.4);
+      const jitter = spread + depth * 0.08;
+      for (const side of [-1, 1]) {
+        const local = new THREE.Vector3(
+          side * 1.18 + (Math.random() - 0.5) * jitter,
+          -0.2 + (Math.random() - 0.5) * jitter * 0.8,
+          0.02,
+        );
+        this.plane.localToWorld(local);
+        local.addScaledVector(backDir, depth + Math.random() * 0.25);
+        local.y += Math.random() * jitter * 0.5;
+        if (side === -1) {
+          this.exhaustPositions[i * 3] = local.x;
+          this.exhaustPositions[i * 3 + 1] = local.y;
+          this.exhaustPositions[i * 3 + 2] = local.z;
+        }
+      }
+    }
+    // fill both engines
+    for (let i = 0; i < count; i += 1) {
+      const side = i % 2 === 0 ? -1 : 1;
+      const depth = 0.3 + (i / Math.max(1, count - 1)) * (1.2 + power * 1.6);
+      const jitter = spread + depth * 0.07;
+      const local = new THREE.Vector3(
+        side * 1.18 + (Math.random() - 0.5) * jitter,
+        -0.2 + (Math.random() - 0.5) * jitter * 0.7,
+        0.02,
+      );
+      this.plane.localToWorld(local);
+      local.addScaledVector(backDir, depth + Math.random() * 0.2);
+      local.y += (Math.random() - 0.2) * jitter;
+      this.exhaustPositions[i * 3] = local.x;
+      this.exhaustPositions[i * 3 + 1] = local.y;
+      this.exhaustPositions[i * 3 + 2] = local.z;
+    }
+    this.exhaustAttribute.needsUpdate = true;
   }
 
   private updateTrail(t: number) {
@@ -585,13 +904,204 @@ export class FlightWorld {
     this.plane.add(tailLight);
     this.disposables.push(lightGeometry, lightMaterial);
 
+    // Cargo hold and hinged door.
+    const holdMaterial = new THREE.MeshStandardMaterial({
+      color: 0x241b20,
+      metalness: 0.25,
+      roughness: 0.92,
+    });
+    const holdGeometry = new THREE.BoxGeometry(0.014, 0.42, 0.58);
+    const hold = new THREE.Mesh(holdGeometry, holdMaterial);
+    hold.position.set(0.424, 0.0, 0.72);
+    this.plane.add(hold);
+    this.disposables.push(holdGeometry, holdMaterial);
+
+    const doorMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0xf7ece8,
+      metalness: 0.22,
+      roughness: 0.32,
+      clearcoat: 0.7,
+      clearcoatRoughness: 0.22,
+      envMapIntensity: 1.05,
+    });
+    this.cargoDoorPivot = new THREE.Group();
+    this.cargoDoorPivot.position.set(0.432, 0.22, 0.72);
+    const doorGeometry = new THREE.BoxGeometry(0.018, 0.46, 0.58);
+    const doorPanel = new THREE.Mesh(doorGeometry, doorMaterial);
+    doorPanel.position.y = -0.23;
+    doorPanel.castShadow = true;
+    this.cargoDoorPivot.add(doorPanel);
+    this.plane.add(this.cargoDoorPivot);
+    this.disposables.push(doorGeometry, doorMaterial);
+
+    // Plain blush cargo box with a gold ribbon cross.
+    const cargoMaterial = new THREE.MeshStandardMaterial({
+      color: 0xf1b4c5,
+      metalness: 0.08,
+      roughness: 0.52,
+      envMapIntensity: 0.9,
+    });
+    const ribbonMaterial = new THREE.MeshStandardMaterial({
+      color: 0xe7c98f,
+      metalness: 0.8,
+      roughness: 0.3,
+      envMapIntensity: 1.1,
+    });
+    const boxSize = 0.24;
+    this.cargoBox = new THREE.Group();
+    const boxGeometry = new THREE.BoxGeometry(boxSize, boxSize * 0.92, boxSize);
+    const boxMesh = new THREE.Mesh(boxGeometry, cargoMaterial);
+    boxMesh.castShadow = true;
+    this.cargoBox.add(boxMesh);
+    const bandA = new THREE.Mesh(
+      new THREE.BoxGeometry(boxSize + 0.006, boxSize * 0.16, boxSize + 0.006),
+      ribbonMaterial,
+    );
+    const bandB = new THREE.Mesh(
+      new THREE.BoxGeometry(boxSize * 0.16, boxSize * 0.94, boxSize + 0.006),
+      ribbonMaterial,
+    );
+    this.cargoBox.add(bandA, bandB);
+    this.cargoBoxHome.set(1.22, 0.12, 0.72);
+    this.cargoBoxTarget.set(0.3, 0.02, 0.72);
+    this.cargoBox.position.copy(this.cargoBoxHome);
+    this.plane.add(this.cargoBox);
+    this.disposables.push(boxGeometry, cargoMaterial, ribbonMaterial);
+
+    // Landing gear, hidden once airborne.
+    this.landingGear = new THREE.Group();
+    const gearMaterial = new THREE.MeshStandardMaterial({
+      color: 0x26232a,
+      metalness: 0.7,
+      roughness: 0.42,
+    });
+    const strutGeometry = new THREE.CylinderGeometry(0.018, 0.018, 0.36, 7);
+    const wheelGeometry = new THREE.CylinderGeometry(0.085, 0.085, 0.055, 12);
+    wheelGeometry.rotateZ(Math.PI / 2);
+    for (const gear of [
+      { x: 0, z: 1.35 },
+      { x: -0.56, z: -0.28 },
+      { x: 0.56, z: -0.28 },
+    ]) {
+      const strut = new THREE.Mesh(strutGeometry, gearMaterial);
+      strut.position.set(gear.x, -0.55, gear.z);
+      this.landingGear.add(strut);
+      const wheel = new THREE.Mesh(wheelGeometry, gearMaterial);
+      wheel.position.set(gear.x, -0.73, gear.z);
+      this.landingGear.add(wheel);
+    }
+    this.plane.add(this.landingGear);
+    this.disposables.push(strutGeometry, wheelGeometry, gearMaterial);
+
     this.plane.scale.setScalar(0.92);
+  }
+
+  setTakeoff(value: number) {
+    if (this.disposed) return;
+    const u = clamp01(value);
+    if (u >= 1) {
+      this.setProgress(0);
+      return;
+    }
+
+    const dir = this.takeoffDir;
+    const roll = smoothstep(0.08, 0.36, u);
+    const taxi = smoothstep(0.34, 0.72, u);
+    const accel = smoothstep(0.62, 0.9, u);
+    const travel = 26 * (roll * 0.18 + taxi * 0.42 + accel * 0.4 + smoothstep(0.88, 1, u) * 0.12);
+    const groundPoint = this.takeoffStart.clone().addScaledVector(dir, travel);
+    groundPoint.y = this.groundY + 0.58;
+    const climb = smoothstep(0.66, 1, u);
+    const position = groundPoint.lerp(this.cruisePlanePosition, climb);
+    const idleBob = Math.sin(u * Math.PI * 10) * 0.012 * (1 - climb);
+    position.y += idleBob;
+    this.plane.position.copy(position);
+
+    const pitch = smoothstep(0.64, 0.92, u) * 0.44;
+    const groundRotation = this.groundQuaternion
+      .clone()
+      .multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-pitch, 0, 0)));
+    groundRotation.slerp(this.cruisePlaneQuaternion, smoothstep(0.86, 1, u));
+    this.plane.quaternion.copy(groundRotation);
+
+    const doorOpen = smoothstep(0.02, 0.15, u) * (1 - smoothstep(0.24, 0.33, u));
+    this.cargoDoorPivot.rotation.z = doorOpen * 1.06;
+
+    const load = smoothstep(0.08, 0.24, u);
+    this.cargoBox.position.lerpVectors(this.cargoBoxHome, this.cargoBoxTarget, load);
+    this.cargoBox.rotation.y = -0.18 * (1 - load);
+    this.cargoBox.visible = u < 0.32;
+
+    const loaderOut = smoothstep(0.28, 0.45, u);
+    this.loaderGroup.position.y = this.groundY - loaderOut * 1.3;
+    this.setLoaderFade(1 - loaderOut);
+
+    const airportFade = 1 - smoothstep(0.46, 0.88, u);
+    this.setAirportFade(airportFade);
+
+    this.landingGear.visible = u < 0.84;
+
+    const right = new THREE.Vector3(1, 0, 0).applyQuaternion(this.groundQuaternion);
+    const forward = dir.clone();
+    const drift = Math.sin(u * Math.PI * 2) * 0.18;
+    const loadCamera = this.takeoffStart
+      .clone()
+      .addScaledVector(right, (this.mobile ? 8.8 : 7.2) + drift)
+      .add(new THREE.Vector3(0, this.mobile ? 3.0 : 2.5, 0))
+      .addScaledVector(forward, (this.mobile ? 5.8 : 4.8) + smoothstep(0, 0.35, u) * 1.1);
+    const loadTarget = this.takeoffStart
+      .clone()
+      .addScaledVector(right, 0.2)
+      .add(new THREE.Vector3(0, 0.12, 0))
+      .addScaledVector(forward, 0.55 + smoothstep(0, 0.35, u) * 0.4);
+
+    const chaseCamera = position
+      .clone()
+      .addScaledVector(right, this.mobile ? 7.8 : 6.6)
+      .add(new THREE.Vector3(0, this.mobile ? 3.8 : 3.1, 0))
+      .addScaledVector(forward, this.mobile ? -13 : -11.5);
+    const chaseTarget = position
+      .clone()
+      .addScaledVector(forward, 4)
+      .add(new THREE.Vector3(0, 1.0, 0));
+
+    const follow = smoothstep(0.3, 0.66, u);
+    const handover = smoothstep(0.7, 1, u);
+    const cameraPosition = loadCamera
+      .lerp(chaseCamera, follow)
+      .lerp(this.cruiseCameraPosition, handover);
+    const lookTarget = loadTarget.lerp(chaseTarget, follow).lerp(this.cruiseLookAt, handover);
+
+    this.camera.position.copy(cameraPosition);
+    this.camera.lookAt(lookTarget);
+
+    const nearMap = (this.cloudNear.material as THREE.MeshBasicMaterial).map;
+    const farMap = (this.cloudFar.material as THREE.MeshBasicMaterial).map;
+    if (nearMap) nearMap.offset.x = u * 0.12;
+    if (farMap) farMap.offset.x = u * 0.07;
+    if (this.trail) this.trail.visible = false;
+
+    const throttle = smoothstep(0.06, 0.24, u) * 0.45 + smoothstep(0.24, 0.72, u) * 0.35 + smoothstep(0.72, 1, u) * 0.5;
+    const backDir = new THREE.Vector3(0, 0, -1).applyQuaternion(this.plane.quaternion).normalize();
+    if (this.exhaust) this.updateExhaust(throttle, backDir, 0.05 + throttle * 0.06);
+
+    this.render();
   }
 
   setProgress(value: number) {
     if (this.disposed) return;
     const t = clamp01(value);
     this.progress = t;
+    this.setAirportFade(0);
+    this.setLoaderFade(0);
+    this.cargoDoorPivot.rotation.z = 0;
+    this.cargoBox.visible = false;
+    this.landingGear.visible = false;
+    if (this.trail) this.trail.visible = !this.reduced;
+    if (this.exhaust) {
+      this.exhaust.visible = false;
+      (this.exhaust.material as THREE.PointsMaterial).opacity = 0;
+    }
 
     const point = this.curve.getPointAt(t);
     const tangent = this.curve.getTangentAt(t).normalize();
@@ -623,6 +1133,7 @@ export class FlightWorld {
     this.camera.position.copy(cameraPosition);
     const look = point.clone().add(tangent.clone().multiplyScalar(3.4)).add(new THREE.Vector3(0, 0.9, 0));
     this.camera.lookAt(look);
+    this.cruiseLookAt.copy(look);
 
     this.updateTrail(t);
 
